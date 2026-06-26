@@ -1,0 +1,3142 @@
+{
+  "name": "GermanNewsFa",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ $json.caption }}"
+        }
+      },
+      "id": "d7d4dbad-c33d-4515-abeb-883ab5e82ec1",
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        3216
+      ],
+      "webhookId": "YOUR_webhook_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_API_ID",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nif ($json.todayKey) sd.daily_calendar_last_date = $json.todayKey;\n\n// Berlin time\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));\n\nconst toFaDigits = (s) => String(s).replace(/\\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]);\n\n// Jalali (native Intl)\nconst jalaliFormatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {\n  weekday: 'long',\n  day: 'numeric',\n  month: 'long',\n  year: 'numeric'\n});\nconst jParts = jalaliFormatter.formatToParts(now);\nconst jWeekday = jParts.find(p => p.type === 'weekday')?.value;\nconst jDay = jParts.find(p => p.type === 'day')?.value;\nconst jMonth = jParts.find(p => p.type === 'month')?.value;\nconst jYear = jParts.find(p => p.type === 'year')?.value;\n\nconst jalaliDate = `${jWeekday} ${toFaDigits(jDay)} ${jMonth} ${toFaDigits(jYear)}`;\n\n// Gregorian month names (FA)\nconst monthsFa = ['ژانویه','فوریه','مارس','آوریل','می','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسامبر'];\nconst gDay = now.getDate();\nconst gMonthName = monthsFa[now.getMonth()];\nconst gYear = now.getFullYear();\nconst gregorianDate = `${toFaDigits(gDay)} ${gMonthName} ${toFaDigits(gYear)}`;\n\n// Time HH:mm\nconst hours = toFaDigits(String(now.getHours()).padStart(2,'0'));\nconst minutes = toFaDigits(String(now.getMinutes()).padStart(2,'0'));\nconst timeLine = `${hours}:${minutes}`;\n\n// Holidays\nconst holidaysToday = Array.isArray($json.holidaysToday) ? $json.holidaysToday : [];\nlet holidayBlock = '';\nif (holidaysToday.length) {\n  const lines = holidaysToday.map(h =>\n    h.isNational ? `• ${h.localName} (سراسری)` : `• ${h.localName} (ویژهٔ ایالت‌ها: ${h.states})`\n  ).join('\\n');\n  holidayBlock = `\\n📌 تعطیلات/مناسبت‌های امروز:\\n${lines}`;\n}\n\n// Place\nif (!$json.place) throw new Error(\"place missing (check Merge inputs)\");\nconst { name, city } = $json.place;\n\n// Binary\nconst binary = $input.first().binary;\n\n// Caption\nconst caption =\n` ☀️ سلام، صبح بخیر\n\n🏛 تصویر روز\n${name} — ${city}\n\n📅 ${jalaliDate} | ${gregorianDate}\n⏰ ${timeLine} — به وقت برلین${holidayBlock}\n\nبا ما همراه باشید با تازه‌ترین اخبار آلمان و جهان\n\n@German_news_fa\nhttps://x.com/GermanNewsFa`;\n\nreturn [{\n  json: { caption: `\\u202B${caption}\\u202C` },\n  binary\n}];"
+      },
+      "id": "1232068e-17c3-4415-b21a-4156543b2c17",
+      "name": "Build Caption",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        3216
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ !!$binary?.data }}",
+              "operation": "isTrue"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7d552c24-4158-4416-92d6-e8947ae2da64",
+      "name": "IF Has Binary?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        3216
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.place.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "GermanNewsFA/1.0 (https://t.me/German_news_fa)"
+            },
+            {
+              "name": "Accept",
+              "value": "image/*,*/*;q=0.8"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "20e33905-9ad7-4d27-8ce9-16a15411f549",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -752,
+        3136
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "fbdf39ca-4457-42de-b42e-8fad35fc73e9",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -976,
+        3216
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pick Places (3 tries, NO repetition)\n\nconst places = [\n\n  // ===== Berlin =====\n  { name: \"دروازه براندنبورگ\", city: \"برلین\", file: \"Brandenburg_Gate_Berlin.jpg\" },\n  { name: \"رایشستاگ\", city: \"برلین\", file: \"Reichstag_building_Berlin.jpg\" },\n  { name: \"جزیره موزه‌ها\", city: \"برلین\", file: \"Museum_Island_Berlin.jpg\" },\n  { name: \"ایست ساید گالری\", city: \"برلین\", file: \"East_Side_Gallery_Berlin.jpg\" },\n  { name: \"برج تلویزیونی برلین\", city: \"برلین\", file: \"Fernsehturm_Berlin.jpg\" },\n  { name: \"کاخ شارلوتنبورگ\", city: \"برلین\", file: \"Charlottenburg_Palace_Berlin.jpg\" },\n  { name: \"میدان پوتسدامر پلاتس\", city: \"برلین\", file: \"Potsdamer_Platz.jpg\" },\n  { name: \"پارک تیرگارتن\", city: \"برلین\", file: \"Tiergarten_Berlin.jpg\" },\n\n  // ===== Munich / Bavaria =====\n  { name: \"مارین‌پلاتس\", city: \"مونیخ\", file: \"Marienplatz_Munich.jpg\" },\n  { name: \"کاخ نیمفن‌بورگ\", city: \"مونیخ\", file: \"Nymphenburg_Palace.jpg\" },\n  { name: \"پارک المپیک مونیخ\", city: \"مونیخ\", file: \"Olympiapark_Munich.jpg\" },\n  { name: \"کلیسای زنان مونیخ\", city: \"مونیخ\", file: \"Frauenkirche_Munich.jpg\" },\n  { name: \"قلعه نوی‌شوانشتاین\", city: \"بایرن\", file: \"Schloss_Neuschwanstein.jpg\" },\n  { name: \"کوه تسوگ‌اشپیتسه\", city: \"بایرن\", file: \"Zugspitze.jpg\" },\n  { name: \"دریاچه کونیگزه\", city: \"بایرن\", file: \"Konigssee.jpg\" },\n  { name: \"پارک ملی جنگل باواریا\", city: \"بایرن\", file: \"Bavarian_Forest.jpg\" },\n\n  // ===== Hamburg =====\n  { name: \"الب‌فیلارمونی\", city: \"هامبورگ\", file: \"Elbphilharmonie.jpg\" },\n  { name: \"بندر هامبورگ\", city: \"هامبورگ\", file: \"Port_of_Hamburg.jpg\" },\n  { name: \"اشپایشرشتات\", city: \"هامبورگ\", file: \"Speicherstadt.jpg\" },\n\n  // ===== Cologne =====\n  { name: \"کلیسای جامع کلن\", city: \"کلن\", file: \"Cologne_Cathedral.jpg\" },\n  { name: \"پل هوهنتسولرن\", city: \"کلن\", file: \"Hohenzollern_Bridge.jpg\" },\n\n  // ===== Frankfurt =====\n  { name: \"میدان رومر\", city: \"فرانکفورت\", file: \"Romer_Frankfurt.jpg\" },\n  { name: \"آسمان‌خراش‌های فرانکفورت\", city: \"فرانکفورت\", file: \"Frankfurt_Skyline.jpg\" },\n  { name: \"بانک مرکزی اروپا\", city: \"فرانکفورت\", file: \"European_Central_Bank_Frankfurt.jpg\" },\n\n  // ===== Dresden =====\n  { name: \"کاخ زوینگر\", city: \"درسدن\", file: \"Zwinger_Dresden.jpg\" },\n  { name: \"اپرای سمپر\", city: \"درسدن\", file: \"Semperoper_Dresden.jpg\" },\n  { name: \"کلیسای زنان درسدن\", city: \"درسدن\", file: \"Frauenkirche_Dresden.jpg\" },\n\n  // ===== Heidelberg =====\n  { name: \"قلعه هایدلبرگ\", city: \"هایدلبرگ\", file: \"Heidelberg_Castle.jpg\" },\n  { name: \"شهر قدیمی هایدلبرگ\", city: \"هایدلبرگ\", file: \"Heidelberg_Old_Town.jpg\" },\n\n  // ===== Baden-Württemberg =====\n  { name: \"قلعه هوهنزولرن\", city: \"بادن-وورتمبرگ\", file: \"Hohenzollern_Castle.jpg\" },\n  { name: \"جنگل سیاه\", city: \"بادن-وورتمبرگ\", file: \"Black_Forest.jpg\" },\n  { name: \"موزه مرسدس بنز\", city: \"اشتوتگارت\", file: \"Mercedes_Benz_Museum.jpg\" },\n  { name: \"موزه پورشه\", city: \"اشتوتگارت\", file: \"Porsche_Museum.jpg\" },\n\n  // ===== Saxony =====\n  { name: \"پل باستای\", city: \"زاکسن\", file: \"Bastei_Bridge.jpg\" },\n  { name: \"پارک ملی ساکسون سوئیس\", city: \"زاکسن\", file: \"Saxon_Switzerland.jpg\" },\n\n  // ===== Rhineland =====\n  { name: \"دره راین\", city: \"راینلند\", file: \"Rhine_Valley.jpg\" },\n  { name: \"قلعه التز\", city: \"راینلند-فالتس\", file: \"Burg_Eltz.jpg\" },\n\n  // ===== North Germany =====\n  { name: \"جزیره روگن\", city: \"مکلنبورگ\", file: \"Rugen_Cliffs.jpg\" },\n  { name: \"جزیره زولت\", city: \"شلسویگ-هولشتاین\", file: \"Sylt_Island.jpg\" },\n  { name: \"پارک ملی هارز\", city: \"نیدرزاکسن\", file: \"Harz_National_Park.jpg\" },\n\n  // ===== Historic Cities =====\n  { name: \"روتنبورگ اب در تاوبر\", city: \"بایرن\", file: \"Rothenburg_ob_der_Tauber.jpg\" },\n  { name: \"بامبرگ قدیم\", city: \"بامبرگ\", file: \"Bamberg_Old_Town.jpg\" },\n  { name: \"نورنبِرگ قدیم\", city: \"نورنبرگ\", file: \"Nuremberg_Old_Town.jpg\" },\n  { name: \"لوبک قدیم\", city: \"لوبک\", file: \"Holstentor_Lubeck.jpg\" },\n\n  // ===== Political / Modern =====\n  { name: \"بوندسرات\", city: \"برلین\", file: \"Bundesrat_Berlin.jpg\" },\n  { name: \"دفتر صدراعظم آلمان\", city: \"برلین\", file: \"German_Chancellery.jpg\" },\n  { name: \"پارلمان ایالتی دوسلدورف\", city: \"دوسلدورف\", file: \"Landtag_Dusseldorf.jpg\" },\n\n  // ===== Nature Lakes =====\n  { name: \"دریاچه شلیرزه\", city: \"بایرن\", file: \"Schliersee.jpg\" },\n  { name: \"دریاچه تیگرنزه\", city: \"بایرن\", file: \"Tegernsee.jpg\" },\n\n  // ===== Extra Urban =====\n  { name: \"کاخ سانسوسی\", city: \"پوتسدام\", file: \"Sanssouci_Palace.jpg\" },\n  { name: \"دروازه پورته نیگرا\", city: \"تریر\", file: \"Porta_Nigra_Trier.jpg\" },\n  { name: \"شهر قدیمی فرایبورگ\", city: \"فرایبورگ\", file: \"Freiburg_Old_Town.jpg\" },\n  { name: \"شهر قدیمی برمن\", city: \"برمن\", file: \"Bremen_Old_Town.jpg\" }\n\n];\n\nfunction shuffle(arr){\n  const a = arr.slice();\n  for(let i=a.length-1;i>0;i--){\n    const j = Math.floor(Math.random()*(i+1));\n    [a[i],a[j]]=[a[j],a[i]];\n  }\n  return a;\n}\n\nfunction toIsoDate(d){\n  return d.toISOString().slice(0,10);\n}\n\nconst sd = $getWorkflowStaticData('global');\nconst todayKey = toIsoDate(new Date());\n\nif(sd.daily_calendar_last_date === todayKey) return [];\n\nif(!Array.isArray(sd.daily_places_bag) || sd.daily_places_bag.length===0){\n  sd.daily_places_bag = shuffle(places.map((_,i)=>i));\n}\n\nconst out = [];\nconst maxAttempts = Math.min(3, places.length);\n\nfor(let i=0;i<maxAttempts;i++){\n  if(sd.daily_places_bag.length===0){\n    sd.daily_places_bag = shuffle(places.map((_,i)=>i));\n  }\n  const idx = sd.daily_places_bag.pop();\n  const place = {...places[idx]};\n  const fileEnc = encodeURIComponent(place.file);\n  place.url = `https://commons.wikimedia.org/wiki/Special:FilePath/${fileEnc}?width=1600`;\n  out.push({json:{place,todayKey}});\n}\n\nreturn out;"
+      },
+      "id": "a1d6266c-69f8-4ad1-bb48-0ac7e9491d8a",
+      "name": "Choose Place",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        3216
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6,
+              "triggerAtMinute": 5
+            }
+          ]
+        }
+      },
+      "id": "267fa75d-fae8-4a16-baf0-f9853950cff7",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1424,
+        3216
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "provider",
+              "value": "=openai"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f799d352-3a8f-4963-82e0-d895fdf0d5ee",
+      "name": "Set provider (openai|gemini)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Telegram caption: FA title + source + link (max ~1000 chars)\nconst inputItems = $input.all();\n\nreturn inputItems.map(item => {\n  const j = item.json;\n\n  const titleFa = (j.title_fa || j.title || '').toString().trim();\n  const link = (j.link || j.guid || '').toString().trim();\n\n  let caption = titleFa;\n  if (link) caption += `\\n\\nمنبع: SPIEGEL\\n${link}`;\n\n  if (caption.length > 1000) {\n    if (link && !caption.endsWith(link)) {\n      const roomForLink = 1 + link.length; // \"\\n\" + link\n      caption = caption.slice(0, Math.max(0, 1000 - roomForLink - 1)) + '…\\n' + link;\n    } else {\n      caption = caption.slice(0, 1000);\n    }\n  }\n\n  j.caption = caption;\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4624,
+        1520
+      ],
+      "id": "a139236f-914c-443b-81ba-3d6c7f83fef1",
+      "name": "Build caption"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Telegram payload — footer always visible + sentence-safe caption\n\nconst items = $input.all();\n\nconst esc = (s = '') =>\n  String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\nfunction hostFrom(link = '') {\n  const m = String(link).match(/^https?:\\/\\/([^\\/?#]+)/i);\n  return m ? m[1].replace(/^www\\./, '') : '';\n}\n\nconst RLE = '\\u202B';\nconst PDF = '\\u202C';\nconst LRI = '\\u2066';\nconst PDI = '\\u2069';\n\nconst TELEGRAM_CAPTION_LIMIT = 1024;\nconst TELEGRAM_TEXT_LIMIT = 4096;\nconst CAPTION_SAFE_LIMIT = 960;\n\nfunction wrapRTL(s = '') {\n  return `${RLE}${s}${PDF}`;\n}\n\nfunction sentenceSafeCut(text = '', maxLen = 900) {\n  const s = String(text || '').trim();\n  if (!s || s.length <= maxLen) return { head: s, tail: '' };\n\n  const slice = s.slice(0, maxLen);\n  const lastSentenceEnd = Math.max(\n    slice.lastIndexOf('.'),\n    slice.lastIndexOf('!'),\n    slice.lastIndexOf('؟'),\n    slice.lastIndexOf('؛')\n  );\n\n  if (lastSentenceEnd > 80) {\n    const head = slice.slice(0, lastSentenceEnd + 1).trim();\n    const tail = s.slice(head.length).trim();\n    return { head, tail };\n  }\n\n  return {\n    head: slice.slice(0, Math.max(0, maxLen - 1)).trim() + '…',\n    tail: s.slice(maxLen).trim()\n  };\n}\n\nfunction smartChunk(text, limit) {\n  const clean = String(text || '').trim();\n  if (!clean) return [];\n\n  const paras = clean.split(/\\n\\s*\\n/).map(s => s.trim()).filter(Boolean);\n  const chunks = [];\n  let buf = '';\n\n  const flush = () => {\n    if (buf.trim()) chunks.push(buf.trim());\n    buf = '';\n  };\n\n  function pushHard(s) {\n    for (let i = 0; i < s.length; i += limit) {\n      chunks.push(s.slice(i, i + limit));\n    }\n  }\n\n  function addUnit(unit, joiner) {\n    if (!buf) {\n      if (unit.length <= limit) buf = unit;\n      else pushHard(unit);\n      return;\n    }\n\n    const candidate = buf + joiner + unit;\n\n    if (candidate.length <= limit) {\n      buf = candidate;\n    } else {\n      flush();\n      if (unit.length <= limit) buf = unit;\n      else pushHard(unit);\n    }\n  }\n\n  for (const p of paras) {\n    if (p.length <= limit) {\n      addUnit(p, '\\n\\n');\n    } else {\n      const sentences = p\n        .split(/(?<=[\\.\\!\\?؟؛])\\s+/)\n        .map(s => s.trim())\n        .filter(Boolean);\n\n      for (const s of sentences) {\n        if (s.length <= limit) addUnit(s, ' ');\n        else {\n          flush();\n          pushHard(s);\n        }\n      }\n    }\n  }\n\n  flush();\n  return chunks.filter(Boolean);\n}\n\nfunction appendFooterToChunks(chunks, footer) {\n  if (!footer) return chunks;\n\n  if (!chunks.length) return [footer];\n\n  const last = chunks[chunks.length - 1];\n  const candidate = `${last}\\n\\n${footer}`;\n\n  if (candidate.length <= TELEGRAM_TEXT_LIMIT) {\n    chunks[chunks.length - 1] = candidate;\n  } else {\n    chunks.push(footer);\n  }\n\n  return chunks;\n}\n\nreturn items.map(item => {\n  const j = item.json || {};\n\n  const titleFa = (j.title_fa || j.title || '').toString().trim();\n  const teaserFa = (j.teaser_fa || '').toString().trim();\n  const shortSummaryFa = (j.short_summary_fa || '').toString().trim();\n  const hashtagFa = (j.hashtag_fa || '').toString().trim();\n\n  const link = (\n    j.link ||\n    j.url ||\n    j.guid ||\n    j.originalLink ||\n    ''\n  ).toString().trim();\n\n  const photo = (\n    j.imageUrl ||\n    (j.telegram && j.telegram.photo) ||\n    ''\n  ).toString().trim();\n\n  const hasRealImage = !!(j.imageUrl && photo);\n\n  const imageSourceLine = hasRealImage\n    ? `📸 ${LRI}<a href=\"${esc(photo)}\">منبع تصویر</a>${PDI}`\n    : '';\n\n  const host = hostFrom(link);\n  const continueText = host\n    ? `ادامه خبر (${esc(host)})`\n    : 'ادامه خبر';\n\n  const continueHtml = link\n    ? `🔗 ${LRI}<a href=\"${esc(link)}\">${continueText}</a>${PDI}`\n    : '';\n\n  const channelHandle = `${LRI}@German_news_fa${PDI}`;\n\n  const footer = [\n    continueHtml,\n    channelHandle\n  ].filter(Boolean).join('\\n\\n');\n\n  const titleHtml = `📰 <b>${esc(titleFa)}</b>`;\n  const summaryHtml = shortSummaryFa ? `🔎 ${esc(shortSummaryFa)}` : '';\n  const hashtagHtml = hashtagFa ? esc(hashtagFa) : '';\n  const teaserHtml = esc(teaserFa);\n\n  let caption = '';\n  let textChunks = [];\n\n if (hasRealImage) {\n\n const captionPrefix = [\n  imageSourceLine,\n  hashtagHtml,\n  titleHtml,\n  summaryHtml\n]\n  .filter(Boolean)\n  .join('\\n\\n');\n\n  const footerReserve =\n    footer\n      ? footer.length + 20\n      : 0;\n\n  const maxTeaserInCaption =\n    CAPTION_SAFE_LIMIT -\n    captionPrefix.length -\n    footerReserve -\n    20;\n\n  let teaserHead = '';\n  let teaserTail = teaserFa;\n\n  if (teaserFa && maxTeaserInCaption > 120) {\n\n    const cut =\n      sentenceSafeCut(\n        teaserFa,\n        maxTeaserInCaption\n      );\n\n    teaserHead = cut.head;\n    teaserTail = cut.tail;\n  }\n\n  // Footer ALWAYS inside caption\n  const captionBody = [\n    captionPrefix,\n    teaserHead ? esc(teaserHead) : '',\n    footer\n  ]\n  .filter(Boolean)\n  .join('\\n\\n');\n\n  let finalCaption = captionBody;\n\n  // If caption too long -> shorten ONLY teaser\n  if (finalCaption.length > TELEGRAM_CAPTION_LIMIT - 5) {\n\n    const allowedText =\n      TELEGRAM_CAPTION_LIMIT -\n      footerReserve -\n      captionPrefix.length -\n      20;\n\n    let shortText = teaserHead;\n\n    if (shortText.length > allowedText) {\n\n      shortText =\n        shortText.slice(0, allowedText);\n\n      const lastSentence =\n        Math.max(\n          shortText.lastIndexOf('.'),\n          shortText.lastIndexOf('!'),\n          shortText.lastIndexOf('؟')\n        );\n\n      if (lastSentence > 80) {\n\n        shortText =\n          shortText.slice(0, lastSentence + 1);\n\n      } else {\n\n        shortText =\n          shortText.trim() + '…';\n      }\n    }\n\n    finalCaption = [\n      captionPrefix,\n      esc(shortText),\n      footer\n    ]\n    .filter(Boolean)\n    .join('\\n');\n  }\n\n  caption = wrapRTL(\n    finalCaption.slice(0, TELEGRAM_CAPTION_LIMIT)\n  );\n\n  // Remaining text only\n  textChunks =\n    teaserTail\n      ? smartChunk(\n          esc(teaserTail),\n          TELEGRAM_TEXT_LIMIT\n        ).map(wrapRTL)\n      : [];\n\n} else {\n\n  // No image → all text in chunks\nconst body = [\n  hashtagHtml,\n  titleHtml,\n  summaryHtml,\n  teaserHtml,\n  footer\n]\n  .filter(Boolean)\n  .join('\\n');\n\n  textChunks =\n    smartChunk(\n      body,\n      TELEGRAM_TEXT_LIMIT\n    ).map(wrapRTL);\n}\n    \n  const replyMarkup = link\n    ? JSON.stringify({\n        inline_keyboard: [[\n          { text: 'ادامه خبر 🔗', url: link }\n        ]]\n      })\n    : undefined;\n\n  return {\n    json: {\n      ...j,\n      link,\n      telegram: {\n        photo,\n        hasRealImage,\n        caption,\n        textChunks,\n        replyMarkupJSON: replyMarkup\n      }\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4848,
+        1520
+      ],
+      "id": "1c130e32-404f-4d6f-be23-dd9f52dd1beb",
+      "name": "Build Telegram payload1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "93f7ff28-0178-4465-a77a-9a74a7ce52b3",
+              "leftValue": "={{ $json.telegram.hasRealImage.toBoolean() }}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5072,
+        1360
+      ],
+      "id": "1ee50abf-4003-4d6c-97c0-89bb998fda08",
+      "name": "IF has image2"
+    },
+    {
+      "parameters": {
+        "url": "https://www.spiegel.de/schlagzeilen/index.rss",
+        "options": {}
+      },
+      "id": "ff468c32-c281-4c2c-a0a5-f9fee8395326",
+      "name": "RSS Read (Spiegel News)",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.focus.de/politik/rss",
+        "options": {}
+      },
+      "id": "d4478fea-2cc9-409b-af48-3ffe7fcc822b",
+      "name": "RSS Read (focus)",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        1904
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "file": "={{ $json.telegram.photo }}\n",
+        "replyMarkup": "=={{ $json.telegram.replyMarkupJSON }}\n",
+        "forceReply": {},
+        "replyKeyboardOptions": {},
+        "replyKeyboardRemove": {},
+        "additionalFields": {
+          "caption": "={{ $json.telegram.caption }}",
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "3d54f8fd-2128-48b2-8379-eae7e6dd5dfd",
+      "name": "Send a photo message1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        5296,
+        1360
+      ],
+      "webhookId": "YOUR_webhook_D",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_API_ID",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -976,
+        1232
+      ],
+      "id": "48605a19-3373-4f49-bd06-826005bb0eaa",
+      "name": "Merge (Spiegel + FAZ)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -976,
+        1616
+      ],
+      "id": "3bbfa1c7-108c-4ae0-ac40-74a0b940c46a",
+      "name": "Merge(SZ + Tagesschau)"
+    },
+    {
+      "parameters": {
+        "url": "https://rss.sueddeutsche.de/rss/Alles",
+        "options": {}
+      },
+      "id": "c31f5940-d0fe-4891-9c2f-e39fa1125556",
+      "name": "RSS Read (SZ)",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1216,
+        1776
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d9c5c45e-6068-457e-93f6-a1222283f397",
+      "name": "Merge (RSS All)",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        1520
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -752,
+        1712
+      ],
+      "id": "16f21bde-6581-421f-8f34-1982b0646215",
+      "name": "Merge((SZ+TG)+(Fo+Welt))"
+    },
+    {
+      "parameters": {
+        "jsCode": "// keep only items newer than 15 minutes (aligned with cron)\nconst cutoff = Date.now() - 15 * 60 * 1000;\nconst out = [];\n\nfor (const item of $input.all()) {\n  const j = item.json;\n  const candidates = [j.isoDate, j.pubDate, j.date, j.pubdate];\n  let pubDate = null;\n  for (const c of candidates) {\n    if (!c) continue;\n    const d = new Date(c);\n    if (!isNaN(d.getTime())) { pubDate = d; break; }\n  }\n  if (!pubDate) continue;                 // ⛔️ no date → skip\n  if (pubDate.getTime() > cutoff) out.push(item);\n}\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        1520
+      ],
+      "id": "fc64f33e-ce6c-49f9-8aef-5b5e83b2a79a",
+      "name": "Time window (last 15 min)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- Persistent de-duplication across runs (with canonical link) ---\n// Key = normalize(title) | host | (guid || canonical(link))\n\n/** =================== CONFIG =================== **/\nconst TTL_HOURS = 72;                    // retain records for 48 hours\nconst RESET_MEMORY_ON_THIS_RUN = false;  // set true ONCE to clear memory\n/** ============================================== **/\n\n// 1) static memory\nconst staticData = $getWorkflowStaticData('global');\nstaticData.sent = staticData.sent || {}; // { hash: timestamp }\n\n// optional reset\nif (RESET_MEMORY_ON_THIS_RUN) {\n  staticData.sent = {};\n}\n\n// 2) helpers (no DOM types; safe for n8n TS)\nfunction normalize(s){ return (s||\"\").toLowerCase().replace(/\\s+/g,\" \").trim(); }\nfunction simpleHash(s){ let h=5381; for (let i=0;i<s.length;i++) h=((h<<5)+h)+s.charCodeAt(i); return (h>>>0).toString(16); }\nfunction hostFrom(link=''){\n  const m = (link||'').match(/^https?:\\/\\/([^\\/?#]+)/i);\n  return m ? m[1].replace(/^www\\./,'') : '';\n}\nfunction canonicalizeLink(url=''){\n  if (!url) return '';\n  try {\n    // n8n TS tip: avoid DOM types; use globalThis and cast to any\n    const URLCtor = /** @type {any} */ (globalThis).URL;\n    const u = new URLCtor(url);\n    const drop = [\n      'utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id',\n      'utm_reader','utm_name','utm_cid','utm_referrer','fbclid','gclid','igshid','mc_cid','mc_eid'\n    ];\n    drop.forEach(p => u.searchParams.delete(p));\n    u.pathname = (u.pathname || '').replace(/\\/+$/,''); // trim trailing slash\n    u.protocol = 'https:'; // normalize protocol for key stability (optional)\n    return u.toString();\n  } catch {\n    return url;\n  }\n}\n\n// 3) TTL cleanup\nconst now = Date.now();\nconst TTL = TTL_HOURS * 60 * 60 * 1000;\nfor (const k of Object.keys(staticData.sent)) {\n  if (now - staticData.sent[k] > TTL) delete staticData.sent[k];\n}\n\n// 4) main filtering\nconst items = $input.all();\nconst out = [];\nlet skipped = 0;\n\nfor (const it of items) {\n  const j = it.json || {};\n  const rawLink = (j.link || '').toString();\n  const guid = (j.guid || j.id || '').toString();\n\n  const canonLink = canonicalizeLink(rawLink);\n  const host = j.sourceHost || hostFrom(canonLink) || '';\n  const titleNorm = normalize(j.title || \"\");\n  const stableId = guid || canonLink; // prefer guid\n\n  const keyStr = [titleNorm, canonLink].join('|');\n  const hash = simpleHash(keyStr);\n\n  if (staticData.sent[hash]) { skipped++; continue; }\n\n  staticData.sent[hash] = now;\n\n  j._dedup_info = {\n    ttl_hours: TTL_HOURS,\n    memory_size: Object.keys(staticData.sent).length\n  };\n\n  out.push(it);\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        1520
+      ],
+      "id": "cfc7d02d-0e8c-41f2-a927-7ba313ba66ca",
+      "name": "Code (Static Data)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize + in-run dedupe + sort (with canonical link)\n// Output fields: title, link, isoDate, pubDate, content, imageUrl, sourceHost, sourceFeed\n\nconst items = $input.all();\n\nfunction toStr(v){ return (v ?? '').toString().trim(); }\nfunction hostFrom(link=''){\n  const m = link.match(/^https?:\\/\\/([^\\/?#]+)/i);\n  return m ? m[1].replace(/^www\\./,'') : '';\n}\nfunction absolutize(url='', base=''){\n  if (!url) return '';\n  if (/^https?:\\/\\//i.test(url)) return url;\n  if (url.startsWith('//')) return 'https:' + url;\n  if (url.startsWith('/')) {\n    const m = base.match(/^(https?:\\/\\/[^\\/?#]+)/i);\n    if (m) return m[1] + url;\n  }\n  return url;\n}\nfunction firstImgFromHtml(html=''){\n  if (typeof html !== 'string') return '';\n  const m = html.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);\n  return m?.[1] || '';\n}\nfunction canonicalizeLink(url=''){\n  if (!url) return '';\n  try {\n    const u = new URL(url);\n    // drop tracking params\n    const drop = [\n      'utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id',\n      'utm_reader','utm_name','utm_cid','utm_referrer','fbclid','gclid','igshid','mc_cid','mc_eid'\n    ];\n    drop.forEach(p => u.searchParams.delete(p));\n    // normalize trailing slash\n    u.pathname = u.pathname.replace(/\\/+$/,'');\n    // force https for stability (optional)\n    u.protocol = 'https:';\n    return u.toString();\n  } catch {\n    return url;\n  }\n}\nfunction pickImage(j) {\n  const mc = j['media:content'];\n  if (mc) {\n    if (Array.isArray(mc)) {\n      const found = mc.find(x => x?.url);\n      if (found?.url) return toStr(found.url);\n    } else if (typeof mc === 'object' && mc.url) {\n      return toStr(mc.url);\n    }\n  }\n  const mt = j['media:thumbnail'];\n  if (mt) {\n    if (Array.isArray(mt)) {\n      const found = mt.find(x => x?.url);\n      if (found?.url) return toStr(found.url);\n    } else if (typeof mt === 'object' && mt.url) {\n      return toStr(mt.url);\n    }\n  }\n  const mg = j['media:group'];\n  if (mg?.['media:content']?.url) return toStr(mg['media:content'].url);\n\n  if (j.enclosure?.url) return toStr(j.enclosure.url);\n\n  if (j.image?.url) return toStr(j.image.url);\n  if (j.thumbnail?.url) return toStr(j.thumbnail.url);\n  if (j['itunes:image']?.href) return toStr(j['itunes:image'].href);\n\n  const html = j['content:encoded'] || j.content || j.summary || j.description || '';\n  const imgFromHtml = firstImgFromHtml(html);\n  if (imgFromHtml) return toStr(imgFromHtml);\n\n  return '';\n}\n\nconst seen = new Set();\nlet out = [];\n\nfor (const it of items) {\n  const j = it.json ?? {};\n  const rawLink = toStr(j.link || j.guid);\n  if (!rawLink) continue;\n\n  const linkKey = canonicalizeLink(rawLink);\n  if (!linkKey) continue;\n\n  // in-run dedupe by canonical link\n  if (seen.has(linkKey)) continue;\n  seen.add(linkKey);\n\n  // parse/normalize dates\n  const rawDate = j.isoDate || j.pubDate || j.date || null;\n  let iso = null, pub = null;\n  if (rawDate) {\n    const ts = Date.parse(rawDate);\n    if (!Number.isNaN(ts)) {\n      const d = new Date(ts);\n      iso = d.toISOString();\n      pub = d.toUTCString();\n    }\n  }\n\n  // pick/normalize image\n  let img = toStr(j.imageUrl) || pickImage(j);\n  img = absolutize(img, linkKey);\n\n  out.push({\n    json: {\n      sourceHost: hostFrom(linkKey) || hostFrom(j.feedUrl || ''),\n      sourceFeed: j.feedTitle || j.meta?.title || j.source || '',\n      title: toStr(j.title),\n      link: linkKey,                  // ← use canonical link\n      isoDate: iso,\n      pubDate: pub,\n      content: toStr(j.contentSnippet || j.summary || j.content || j['content:encoded'] || ''),\n      imageUrl: img || '',\n    },\n  });\n}\n\n// newest first\nout.sort((a,b) => {\n  const ta = a.json.isoDate ? Date.parse(a.json.isoDate) : 0;\n  const tb = b.json.isoDate ? Date.parse(b.json.isoDate) : 0;\n  return tb - ta;\n});\n\n// cap list size if you want\nconst LIMIT = 3;\nif (out.length > LIMIT) out = out.slice(0, LIMIT);\n\nreturn out;\n"
+      },
+      "id": "51b7c9a2-dca9-4822-851e-0426e14c3eef",
+      "name": "Code (Normalize + Dedupe + Sort)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node v2 — Similarity filter (cosine) with 70% threshold\n// Input items must have: json.title, json.content (یا contentSnippet), json.isoDate, json.imageUrl\n// Place this AFTER \"Code (Normalize + Dedupe + Sort)\" and BEFORE translation/posting.\n\n// ====== CONFIG ======\nconst THRESHOLD = 0.40;           // 40%\nconst KEEP_MODE = 'imageFirst';       // 'newest' | 'longest' | 'imageFirst'\nconst MAX_ITEMS_COMPARE = 500;    // برای اطمینان از سرعت (در صورت نیاز کم/زیاد کن)\n// =====================\n\nconst items = $input.all();\nconst n = Math.min(items.length, MAX_ITEMS_COMPARE);\n\n// --- Helpers ---\nfunction toStr(v){ return (v ?? '').toString(); }\n\n// یک مجموعهٔ کوتاه از stopwordهای عمومی آلمانی/عمومی برای کاهش نویز\nconst STOP = new Set([\n  'der','die','das','und','oder','aber','nicht','mit','für','auf','im','in','am','an','als','von','vom','den','dem',\n  'ein','eine','einer','einem','eines','zu','zur','zum','ist','sind','war','waren','wird','werden','auch','noch',\n  'the','a','an','of','to','for','on','in','at','by','from','it','this','that','be','as','are','was','were'\n]);\n\nfunction normalizeText(t) {\n  return toStr(t)\n    .toLowerCase()\n    .replace(/<[^>]*>/g, ' ')          // حذف HTML ایمن\n    .replace(/https?:\\/\\/\\S+/g, ' ')   // حذف لینک‌ها\n    .replace(/[^\\p{L}\\p{N}\\s]+/gu, ' ')// حذف علائم\n    .replace(/\\s+/g, ' ')              // فشرده‌سازی فاصله‌ها\n    .trim();\n}\n\nfunction tokenize(t) {\n  const toks = normalizeText(t).split(' ');\n  // حذف واژه‌های کوتاه و stopword ها\n  return toks.filter(w => w.length > 2 && !STOP.has(w));\n}\n\nfunction tfVector(tokens) {\n  const map = Object.create(null);\n  for (const w of tokens) map[w] = (map[w] || 0) + 1;\n  return map;\n}\n\nfunction cosineSim(vecA, vecB) {\n  // dot\n  let dot = 0;\n  const keysA = Object.keys(vecA);\n  for (const k of keysA) {\n    if (vecB[k]) dot += vecA[k] * vecB[k];\n  }\n  // norms\n  let normA = 0, normB = 0;\n  for (const k of keysA) normA += vecA[k] * vecA[k];\n  const keysB = Object.keys(vecB);\n  for (const k of keysB) normB += vecB[k] * vecB[k];\n  normA = Math.sqrt(normA);\n  normB = Math.sqrt(normB);\n  if (!normA || !normB) return 0;\n  return dot / (normA * normB);\n}\n\nfunction pickText(j) {\n  return [\n    toStr(j.title),\n    toStr(j.content || j.contentSnippet || j.summary || j['content:encoded'] || '')\n  ].filter(Boolean).join(' — ');\n}\n\nfunction scoreItem(j) {\n  const len = (toStr(j.content || j.contentSnippet || '').length);\n  const hasImg = j.imageUrl ? 1 : 0;\n  const ts = j.isoDate ? Date.parse(j.isoDate) || 0 : 0;\n\n  if (KEEP_MODE === 'longest')   return (len) + hasImg * 100;\n  if (KEEP_MODE === 'imageFirst')return hasImg * 1e9 + ts; // تصویر بشدت ارجح، سپس تازگی\n  // default: newest\n  return ts; // تازه‌ترین\n}\n\n// آماده‌سازی ویژگی‌ها\nconst data = [];\nfor (let i = 0; i < n; i++) {\n  const it = items[i];\n  const j = it.json || {};\n  const text = pickText(j);\n  const tokens = tokenize(text);\n  const vec = tfVector(tokens);\n  data.push({ index: i, item: it, json: j, vec, text });\n}\n\n// گروه‌بندی بر اساس شباهت\nconst used = new Array(n).fill(false);\nconst out = [];\n\nfor (let i = 0; i < n; i++) {\n  if (used[i]) continue;\n\n  // گروه جدید با آیتم i\n  let group = [i];\n  used[i] = true;\n\n  for (let k = i + 1; k < n; k++) {\n    if (used[k]) continue;\n    const sim = cosineSim(data[i].vec, data[k].vec);\n    if (sim >= THRESHOLD) {\n      used[k] = true;\n      group.push(k);\n    }\n  }\n\n  // از گروه، یک آیتم را نگه می‌داریم بر اساس KEEP_MODE\n  if (group.length === 1) {\n    out.push(data[group[0]].item);\n  } else {\n    // بهترین را انتخاب کن\n    let bestIdx = group[0];\n    let bestScore = scoreItem(data[bestIdx].json);\n    for (let t = 1; t < group.length; t++) {\n      const cand = group[t];\n      const s = scoreItem(data[cand].json);\n      if (s > bestScore) {\n        bestScore = s;\n        bestIdx = cand;\n      }\n    }\n\n    // برای شفافیت، متادیتای گروه را روی آیتم برنده می‌گذاریم\n    const winner = data[bestIdx].item;\n    const dupOf = group.filter(g => g !== bestIdx).map(g => ({\n      link: data[g].json.link,\n      title: data[g].json.title\n    }));\n    winner.json._similarity_group = {\n      threshold: THRESHOLD,\n      size: group.length,\n      removed: dupOf\n    };\n\n    out.push(winner);\n  }\n}\n\n// اگر ورودی بیش از MAX_ITEMS_COMPARE بود، باقی را اضافه کن (اختیاری: می‌توانی حذف کنی)\nfor (let i = n; i < items.length; i++) {\n  out.push(items[i]); // فرض: تعداد زیاد معمولاً نداریم؛ اگر داری، همین منطق را توسعه بده\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        1520
+      ],
+      "id": "c3a867e7-77d7-40fd-959a-edf6227c4429",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -976,
+        1904
+      ],
+      "id": "3bb836e5-f8e1-4b04-8ea7-d6607fd01d6e",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "url": "https://www.faz.net/rss/aktuell",
+        "options": {}
+      },
+      "id": "d7a93292-0829-4af9-aa62-9bff9698df4a",
+      "name": "RSS Read (FAZ )",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ensure Parens (Glossary) — after \"Pick title_fa (OpenAI)\", before \"Build caption\"\nconst items = $input.all();\nconst staticData = $getWorkflowStaticData('global');\nconst glossary = staticData.glossary || {}; // همان واژه‌نامه‌ای که در نود ترجمه استفاده می‌کنی\n\nfunction escRe(s){ return s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'); }\n\nconst LRI = '\\u2066'; // Left-to-Right Isolate\nconst PDI = '\\u2069'; // Pop Directional Isolate\n\nfunction ensureParens(text){\n  if (!text) return text;\n  let out = text;\n  for (const [de, fa] of Object.entries(glossary)) {\n    if (!fa || !de) continue;\n    // اگر بعد از فارسی، پرانتز همان DE نبود، اضافه‌اش کن\n    const re = new RegExp(`(^|[^\\\\p{L}\\\\p{N}])(${escRe(fa)})(?!\\\\s*\\\\(\\\\s*(?:${LRI})?${escRe(de)}(?:${PDI})?\\\\s*\\\\))`,'gu');\n    out = out.replace(re, (_, pre, faHit) => `${pre}${faHit} (${LRI}${de}${PDI})`);\n  }\n\n  return out;\n}\n\nreturn items.map(it => {\n  const j = it.json || {};\n  j.title_fa  = ensureParens(j.title_fa);\n  j.teaser_fa = ensureParens(j.teaser_fa);\n  return { json: j };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4176,
+        1520
+      ],
+      "id": "d8f5d541-4146-4714-bd0c-754cf93d1317",
+      "name": "Ensure Parens (Glossary)"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.bbci.co.uk/persian/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        2096
+      ],
+      "id": "2ea9d6c0-007f-4c30-aca1-6b2f9900f26f",
+      "name": "RSS Read(BBC)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -976,
+        2096
+      ],
+      "id": "c62c826f-4080-43bf-a948-b3780dde1c19",
+      "name": "Merge (FA style feeds)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node v2 — Build StyleBank (FA samples -> staticData.style_bank)\nconst input = $input.all();\nconst staticData = $getWorkflowStaticData('global');\n\nfunction clean(s=''){\n  return s.replace(/<\\/?[^>]+>/g,' ')\n          .replace(/\\s+/g,' ')\n          .replace(/[“”\"«»]/g,'')\n          .trim();\n}\nfunction firstSentenceFa(s=''){\n  const t = clean(s);\n  const m = t.match(/^(.+?[\\.!\\؟!])\\s/);\n  return (m ? m[1] : t).slice(0, 180);\n}\n\nconst samples = [];\nfor (const it of input) {\n  const j = it.json || {};\n  const title = clean(j.title || '');\n  const desc  = clean(j.content || j.summary || j.description || '');\n  const s1 = firstSentenceFa(desc || title);\n  if (s1 && s1.length > 30 && /[\\u0600-\\u06FF]/.test(s1)) {\n    samples.push(s1);\n  }\n}\n\nconst bank = Array.isArray(staticData.style_bank) ? staticData.style_bank : [];\nfor (const s of samples) if (!bank.includes(s)) bank.push(s);\nstaticData.style_bank = bank.slice(-60); // آخرین ۶۰ نمونه را نگه‌دار\n\nreturn [{ json: { style_bank_size: staticData.style_bank.length } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        2096
+      ],
+      "id": "f4f5bef2-ae10-4510-b31c-ffa573035294",
+      "name": "Code (staticData.style_bank)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node v2 — Post-process FA (digits, spacing, punctuation, zwnj) — FIXED\nconst items = $input.all();\n\nconst toPersianDigits = s => s.replace(/\\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[+d]);\n\nfunction normalizePunctuation(s=''){\n  return s\n    .replace(/ ,/g,'، ')\n    .replace(/ ?\\.\\.\\./g,'…')\n    .replace(/\\s*-\\s*/g,' - ')\n    .replace(/\\s*:\\s*/g,': ')\n    .replace(/\\s*؛\\s*/g,'؛ ')\n    .replace(/ ?! ?/g,'! ')\n    .replace(/ \\?/g,'؟ ')\n    .replace(/\\s+/g,' ')\n    .replace(/\\s+([»”\\)\\]])/g,'$1')\n    .replace(/([«“\\(\\[])\\s+/g,'$1')\n    .trim();\n}\n\nfunction fixMibashad(s=''){ return s.replace(/\\bمی\\s?باشد\\b/g,'است'); }\n\nfunction zwnj(s=''){\n  // URLها را دست نزن\n  if (/https?:\\/\\//.test(s)) return s;\n  return s\n    .replace(/\\b(ن?می)\\s+/g,'$1\\u200c') // می رود → می‌رود\n    .replace(/\\s+(تر|ترین|ها|های|هایی|ای|ام|ات|اش|اند)\\b/g,'\\u200c$1');\n}\n\nreturn items.map(it=>{\n  const j = it.json || {};\n  const proc = (t='') => normalizePunctuation(zwnj(fixMibashad(toPersianDigits(t.trim()))));\n  j.title_fa  = proc(j.title_fa || '');\n  j.teaser_fa = proc(j.teaser_fa || '');\n  return { json: j };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3952,
+        1520
+      ],
+      "id": "cb613187-b9a3-4d95-8335-bed2761e2785",
+      "name": "Code (Post-process FA)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3504,
+        1520
+      ],
+      "id": "5f954589-7c63-4a05-b20c-312ec6a464d6",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3280,
+        1424
+      ],
+      "id": "b2228979-147f-4fd0-af5e-b88b2e7e9f58",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node v2  (Pick FA fields)\nconst out = $input.all().map(item => {\n  const r = item.json.body ?? item.json;\n  const raw = r?.choices?.[0]?.message?.content || '';\n\n  let title_fa = '';\n  let teaser_fa = '';\n  let short_summary_fa = '';\n  let category = '';\n  let hashtag_fa = '';\n  let importance = 3;\n  let importance_reason = '';\n\n  try {\n    const parsed = JSON.parse(raw);\n\n    title_fa = (parsed.title_fa || '').trim();\n    teaser_fa = (parsed.teaser_fa || '').trim();\n    short_summary_fa = (parsed.short_summary_fa || '').trim();\n    category = (parsed.category || '').trim();\n    hashtag_fa = (parsed.hashtag_fa || '').trim();\n\n    if (parsed.link) item.json.link = parsed.link.trim();\n\n     const imp = Number(parsed.importance);\n    importance = Number.isFinite(imp)\n      ? Math.max(1, Math.min(5, Math.round(imp)))\n      : 3;\n\n    importance_reason = (parsed.importance_reason || '').toString().trim();\n\n  } catch (e) {\n    title_fa = raw.trim();\n    teaser_fa = '';\n    short_summary_fa = '';\n    category = '';\n    hashtag_fa = '';\n    importance = 3;\n    importance_reason = 'fallback: GPT JSON parse failed';\n  }\n\n  item.json.title_fa = title_fa;\n  item.json.teaser_fa = teaser_fa;\n  item.json.short_summary_fa = short_summary_fa;\n  item.json.category = category;\n  item.json.hashtag_fa = hashtag_fa;\n  item.json.importance = importance;\n  item.json.importance_reason = importance_reason;\n\n  return item;\n});\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3728,
+        1520
+      ],
+      "id": "fed97a01-5530-48d3-8926-280a29a7b68f",
+      "name": "Pick title_fa (OpenAI)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.openai_body) }}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3056,
+        1504
+      ],
+      "id": "63cf7546-9d33-4cee-b69d-4285cc4d3e15",
+      "name": "OpenAI Translate (HTTP)",
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_API_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node v2 — Build OpenAI body (Full Article → Persian Telegram News)\nconst items = $input.all();\nconst staticData = $getWorkflowStaticData('global');\n\n// --- Authorities / offices / organs (DE -> FA)\nconst deAuthoritiesGlossary = {\n  \"Bundespräsident\": \"رئیس‌جمهور فدرال آلمان\",\n  \"Bundeskanzler\": \"صدراعظم آلمان\",\n  \"Bundeskanzleramt\": \"دفتر صدراعظم آلمان\",\n  \"Bundesregierung\": \"دولت فدرال آلمان\",\n  \"Bundeskabinett\": \"هیئت دولت فدرال آلمان\",\n  \"Bundestag\": \"بوندستاگ (پارلمان آلمان)\",\n  \"Deutscher Bundestag\": \"بوندستاگ (پارلمان آلمان)\",\n  \"Bundesrat\": \"بوندسرات\",\n  \"Bundesversammlung\": \"مجمع فدرال آلمان\",\n  \"Ministerpräsident\": \"نخست‌وزیر ایالت\",\n  \"Ministerpräsidentin\": \"نخست‌وزیر ایالت\",\n  \"Landtag\": \"پارلمان ایالتی\",\n  \"Landesregierung\": \"دولت ایالتی\",\n\n  \"Bundesministerium des Innern\": \"وزارت کشور آلمان\",\n  \"Bundesministerium des Innern und für Heimat\": \"وزارت کشور آلمان\",\n  \"Bundesministerium der Finanzen\": \"وزارت دارایی آلمان\",\n  \"Bundesministerium der Justiz\": \"وزارت دادگستری آلمان\",\n  \"Bundesministerium für Wirtschaft\": \"وزارت اقتصاد آلمان\",\n  \"Bundesministerium für Wirtschaft und Klimaschutz\": \"وزارت اقتصاد و حفاظت از اقلیم آلمان\",\n  \"Bundesministerium für Arbeit und Soziales\": \"وزارت کار و امور اجتماعی آلمان\",\n  \"Bundesministerium für Gesundheit\": \"وزارت بهداشت آلمان\",\n  \"Bundesministerium für Bildung und Forschung\": \"وزارت آموزش و پژوهش آلمان\",\n  \"Bundesministerium für Umwelt\": \"وزارت محیط زیست آلمان\",\n  \"Bundesministerium für Ernährung und Landwirtschaft\": \"وزارت کشاورزی آلمان\",\n  \"Bundesministerium für Familie\": \"وزارت خانواده آلمان\",\n  \"Bundesministerium für Verkehr\": \"وزارت حمل‌ونقل آلمان\",\n  \"Bundesministerium für Verteidigung\": \"وزارت دفاع آلمان\",\n  \"Verteidigungsministerium\": \"وزارت دفاع آلمان\",\n  \"BMVg\": \"وزارت دفاع آلمان\",\n  \"Auswärtiges Amt\": \"وزارت خارجه آلمان\",\n\n  \"Bundespolizei\": \"پلیس فدرال آلمان\",\n  \"Bundeskriminalamt\": \"اداره فدرال پلیس جنایی آلمان\",\n  \"BKA\": \"اداره فدرال پلیس جنایی آلمان\",\n  \"Landeskriminalamt\": \"اداره پلیس جنایی ایالتی\",\n  \"LKA\": \"اداره پلیس جنایی ایالتی\",\n  \"Verfassungsschutz\": \"اداره حفاظت از قانون اساسی آلمان\",\n  \"Bundesamt für Verfassungsschutz\": \"اداره فدرال حفاظت از قانون اساسی آلمان\",\n  \"BfV\": \"اداره فدرال حفاظت از قانون اساسی آلمان\",\n  \"Bundesnachrichtendienst\": \"سازمان اطلاعات خارجی آلمان\",\n  \"BND\": \"سازمان اطلاعات خارجی آلمان\",\n  \"Militärischer Abschirmdienst\": \"سازمان ضدجاسوسی ارتش آلمان\",\n  \"MAD\": \"سازمان ضدجاسوسی ارتش آلمان\",\n  \"Zoll\": \"گمرک آلمان\",\n  \"Bundeswehr\": \"نیروی دفاعی آلمان\",\n  \"Deutsche Bundeswehr\": \"نیروی دفاعی آلمان\",\n  \"Bundeswehrverband\": \"انجمن نیروهای مسلح آلمان\",\n\n  \"Bundesverfassungsgericht\": \"دادگاه قانون اساسی فدرال آلمان\",\n  \"BVerfG\": \"دادگاه قانون اساسی فدرال آلمان\",\n  \"Bundesgerichtshof\": \"دیوان عالی فدرال آلمان\",\n  \"BGH\": \"دیوان عالی فدرال آلمان\",\n  \"Staatsanwaltschaft\": \"دادستانی\",\n  \"Bundesanwaltschaft\": \"دادستانی کل فدرال آلمان\",\n  \"Bundesanwalt\": \"دادستان کل فدرال آلمان\",\n\n  \"Bundesamt für Migration und Flüchtlinge\": \"اداره فدرال مهاجرت و پناهندگان آلمان\",\n  \"BAMF\": \"اداره فدرال مهاجرت و پناهندگان آلمان\",\n  \"Ausländerbehörde\": \"اداره امور اتباع خارجی\",\n\n  \"Robert Koch-Institut\": \"مؤسسه روبرت کخ آلمان\",\n  \"RKI\": \"مؤسسه روبرت کخ آلمان\",\n  \"Paul-Ehrlich-Institut\": \"مؤسسه پاول ارلیش آلمان\",\n  \"PEI\": \"مؤسسه پاول ارلیش آلمان\",\n\n  \"Deutsche Bundesbank\": \"بوندس‌بانک (بانک مرکزی آلمان)\",\n  \"Bundesanstalt für Finanzdienstleistungsaufsicht\": \"نهاد ناظر خدمات مالی آلمان\",\n  \"BaFin\": \"نهاد ناظر خدمات مالی آلمان\",\n  \"Bundeskartellamt\": \"اداره فدرال ضدانحصار آلمان\",\n  \"Bundesnetzagentur\": \"سازمان تنظیم مقررات شبکه‌های آلمان\",\n  \"Bundesagentur für Arbeit\": \"آژانس فدرال کار آلمان\",\n  \"BA\": \"آژانس فدرال کار آلمان\",\n  \"Lufthansa\": \"لوفت‌هانزا\",\n\n  \"ARD\": \"شبکه آ.ار.د\",\n  \"ZDF\": \"شبکه زِد.دِ.اِف\",\n  \"Deutschlandfunk\": \"رادیو آلمان\",\n  \"Deutsche Welle\": \"دویچه‌وله\",\n\n  \"Europäische Union\": \"اتحادیه اروپا\",\n  \"EU\": \"اتحادیه اروپا\",\n  \"EU-Kommission\": \"کمیسیون اروپا\",\n  \"Europäische Kommission\": \"کمیسیون اروپا\",\n  \"EU-Parlament\": \"پارلمان اروپا\",\n  \"Europäisches Parlament\": \"پارلمان اروپا\",\n  \"Europäische Zentralbank\": \"بانک مرکزی اروپا\",\n  \"EZB\": \"بانک مرکزی اروپا\",\n\n  \"Baden-Württemberg\": \"ایالت بادن-وورتمبرگ\",\n  \"Bavaria\": \"بایرن\",\n  \"Bayern\": \"بایرن\",\n  \"Freistaat Bayern\": \"ایالت آزاد بایرن\",\n  \"Berlin\": \"برلین\",\n  \"Brandenburg\": \"ایالت براندنبورگ\",\n  \"Bremen\": \"برمن\",\n  \"Hamburg\": \"هامبورگ\",\n  \"Hesse\": \"ایالت هسن\",\n  \"Hessen\": \"هسن\",\n  \"Mecklenburg-Vorpommern\": \"ایالت مکلنبورگ-فورپومرن\",\n  \"Lower Saxony\": \"ایالت نیدرزاکسن\",\n  \"Niedersachsen\": \"ایالت نیدرزاکسن\",\n  \"North Rhine-Westphalia\": \"ایالت نوردراین-وستفالن\",\n  \"Nordrhein-Westfalen\": \"ایالت نوردراین-وستفالن\",\n  \"Rhineland-Palatinate\": \"ایالت راینلاند-فالتس\",\n  \"Rheinland-Pfalz\": \"ایالت راینلاند-فالتس\",\n  \"Saarland\": \"ایالت زارلاند\",\n  \"Saxony\": \"ایالت زاکسن\",\n  \"Sachsen\": \"ایالت زاکسن\",\n  \"Saxony-Anhalt\": \"ایالت زاکسن-آنهالت\",\n  \"Sachsen-Anhalt\": \"ایالت زاکسن-آنهالت\",\n  \"Schleswig-Holstein\": \"ایالت اشلسویگ-هولشتاین\",\n  \"Thuringia\": \"تورینگن\",\n  \"Thüringen\": \"تورینگن\"\n};\n\nconst baseGlossary = staticData.glossary || {\n  \"Bayern München\": \"بایرن مونیخ\",\n  \"SPD\": \"SPD (حزب سوسیال‌دموکرات آلمان)\",\n  \"CDU\": \"CDU (اتحاد دموکرات مسیحی)\",\n  \"CSU\": \"CSU (اتحاد سوسیال مسیحی)\",\n  \"FDP\": \"FDP (حزب دموکرات آزاد)\",\n  \"AfD\": \"AfD (آلترناتیو برای آلمان)\",\n  \"EU\": \"EU (اتحادیه اروپا)\",\n  \"NATO\": \"NATO (پیمان آتلانتیک شمالی)\",\n  \"Olaf Scholz\": \"اولاف شولتس\",\n  \"Berlin\": \"برلین\"\n};\n\nconst glossary_people_global = {\n  \"António Guterres\": \"آنتونیو گوترش\",\n  \"Antonio Guterres\": \"آنتونیو گوترش\",\n  \"Ursula von der Leyen\": \"اورسولا فون‌درلاین\",\n  \"Charles Michel\": \"شارل میشل\",\n  \"Roberta Metsola\": \"روبرتا متسولا\",\n  \"Christine Lagarde\": \"کریستین لاگارد\",\n  \"Jens Stoltenberg\": \"ینس استولتنبرگ\",\n  \"Mark Rutte\": \"مارک روته\",\n  \"Josep Borrell\": \"ژوزپ بورل\",\n  \"Kaja Kallas\": \"کایا کالاس\",\n\n  \"Joe Biden\": \"جو بایدن\",\n  \"Joseph R. Biden\": \"جو بایدن\",\n  \"Donald Trump\": \"دونالد ترامپ\",\n  \"Donald J. Trump\": \"دونالد ترامپ\",\n  \"Kamala Harris\": \"کامالا هریس\",\n  \"Barack Obama\": \"باراک اوباما\",\n  \"Hillary Clinton\": \"هیلاری کلینتون\",\n  \"Mike Pence\": \"مایک پنس\",\n  \"Nancy Pelosi\": \"نانسی پلوسی\",\n  \"Chuck Schumer\": \"چاک شومر\",\n  \"Mitch McConnell\": \"میچ مک‌کانل\",\n  \"Ron DeSantis\": \"ران دی‌سانتیس\",\n  \"Nikki Haley\": \"نیکی هیلی\",\n\n  \"Keir Starmer\": \"کیر استارمر\",\n  \"Rishi Sunak\": \"ریشی سوناک\",\n  \"Boris Johnson\": \"بوریس جانسون\",\n  \"David Cameron\": \"دیوید کامرون\",\n  \"Nigel Farage\": \"نایجل فاراژ\",\n\n  \"Emmanuel Macron\": \"امانوئل مکرون\",\n  \"Marine Le Pen\": \"مارین لوپن\",\n  \"Jean-Luc Mélenchon\": \"ژان-لوک ملانشون\",\n  \"François Hollande\": \"فرانسوا اولاند\",\n  \"Nicolas Sarkozy\": \"نیکلا سارکوزی\",\n\n  \"Frank-Walter Steinmeier\": \"فرانک-والتر اشتاین‌مایر\",\n  \"Olaf Scholz\": \"اولاف شولتس\",\n  \"Friedrich Merz\": \"فریدریش مرتس\",\n  \"Merz\": \"مرتس\",\n  \"Annalena Baerbock\": \"آنالنا بربوک\",\n  \"Robert Habeck\": \"روبرت هابک\",\n  \"Christian Lindner\": \"کریستین لیندنر\",\n  \"Markus Söder\": \"مارکوس زودر\",\n  \"Angela Merkel\": \"آنگلا مرکل\",\n  \"Gerhard Schröder\": \"گرهارد شرودر\",\n\n  \"Giorgia Meloni\": \"جورجا ملونی\",\n  \"Matteo Salvini\": \"ماتئو سالوینی\",\n  \"Mario Draghi\": \"ماریو دراگی\",\n\n  \"Pedro Sánchez\": \"پدرو سانچز\",\n  \"Pedro Sanchez\": \"پدرو سانچز\",\n\n  \"Geert Wilders\": \"خیرت ویلدرس\",\n  \"Donald Tusk\": \"دونالد توسک\",\n  \"Andrzej Duda\": \"آندژی دودا\",\n  \"Viktor Orbán\": \"ویکتور اوربان\",\n  \"Viktor Orban\": \"ویکتور اوربان\",\n\n  \"Volodymyr Zelenskyy\": \"ولودیمیر زلنسکی\",\n  \"Volodymyr Zelensky\": \"ولودیمیر زلنسکی\",\n  \"Zelenskyy\": \"زلنسکی\",\n  \"Vladimir Putin\": \"ولادیمیر پوتین\",\n  \"Sergey Lavrov\": \"سرگئی لاوروف\",\n  \"Dmitry Medvedev\": \"دیمیتری مدودف\",\n\n  \"Ali Khamenei\": \"علی خامنه‌ای\",\n  \"Iranischer Führer\": \"رهبر ایران\",\n  \"Irans Führer\": \"رهبر ایران\",\n  \"Oberster Führer des Iran\": \"رهبر جمهوری اسلامی ایران\",\n  \"Supreme Leader of Iran\": \"رهبر جمهوری اسلامی ایران\",\n  \"Modschtaba Khamenei\": \"مجتبی خامنه‌ای\",\n  \"Ayatollah Ali Khamenei\": \"آیت‌الله علی خامنه‌ای\",\n  \"Ebrahim Raisi\": \"ابراهیم رئیسی\",\n  \"Masoud Pezeshkian\": \"مسعود پزشکیان\",\n  \"Mohammad Javad Zarif\": \"جواد ظریف\",\n  \"Javad Zarif\": \"جواد ظریف\",\n  \"Mahmoud Abbas\": \"محمود عباس\",\n  \"Benjamin Netanyahu\": \"بنیامین نتانیاهو\",\n  \"Recep Tayyip Erdoğan\": \"رجب طیب اردوغان\",\n  \"Recep Tayyip Erdogan\": \"رجب طیب اردوغان\",\n  \"Mohammed bin Salman\": \"محمد بن سلمان\",\n  \"MBS\": \"محمد بن سلمان\",\n\n  \"Xi Jinping\": \"شی جین‌پینگ\",\n  \"Narendra Modi\": \"نارندرا مودی\",\n  \"Kim Jong Un\": \"کیم جونگ اون\",\n  \"Justin Trudeau\": \"جاستین ترودو\",\n  \"Javier Milei\": \"خاویر میلی\"\n};\n\nconst glossary = {\n  ...baseGlossary,\n  ...deAuthoritiesGlossary,\n  ...glossary_people_global\n};\n\nfunction pickStyleSamples(n = 2) {\n  const bank = staticData.style_bank || [];\n  if (!bank.length) return \"\";\n  const chosen = [];\n  for (let i = 0; i < Math.min(n, bank.length); i++) {\n    chosen.push(bank[(Math.random() * bank.length) | 0]);\n  }\n  return chosen.map((s) => `• ${s}`).join(\"\\n\");\n}\n\nfunction buildSystem(gloss, styleSamples) {\n  const pairs = Object.entries(gloss)\n    .map(([de, fa]) => `- ${de} → ${fa}`)\n    .join(\"\\n\");\n\n  return `\nتو یک ویراستار و مترجم حرفه‌ای خبر آلمانی به فارسی هستی. خروجی باید برای انتشار در کانال تلگرام فارسی آماده باشد: روان، دقیق، بی‌طرف، خبری و غیرماشینی.\n\nوظیفه:\n- متن آلمانیِ ورودی ممکن است متن کامل مقاله باشد یا فقط متن RSS.\n- اگر متن کامل بود، آن را به فارسی خبری بازنویسی و خلاصه‌سازی کن.\n- اگر متن کوتاه بود، همان را دقیق و روان ترجمه و بازنویسی کن.\n- تبلیغات، منو، ناوبری، کوکی، خبرنامه، CTA و متن‌های زائد را نادیده بگیر.\n- هیچ اطلاعاتی اضافه نکن و هیچ نام یا سمت یا عددی را حدس نزن.\n\nخروجی مورد نیاز:\n- title_fa: تیتر فارسی کوتاه، خبری، طبیعی و بازنویسی‌شده.\n- short_summary_fa: خلاصه خیلی کوتاه خبر در ۲ تا ۳ جمله، روان و قابل فهم.\n- teaser_fa: متن اصلی برای تلگرام. بین ۳ تا ۶ پاراگراف کوتاه بنویس.\n- category: فقط یکی از این مقدارها:\n  politics, economy, technology, weather, sport, migration, germany, world, culture\n- hashtag_fa: فقط یکی از این هشتگ‌ها:\n  #سیاست\n  #اقتصاد\n  #تکنولوژی\n  #آب_و_هوا\n  #ورزش\n  #مهاجرت\n  #آلمان\n  #جهان\n  #فرهنگ\n- importance: عددی بین ۱ تا ۵ برای میزان اهمیت خبر.\n- importance_reason: دلیل کوتاه فارسی برای این امتیاز، فقط برای استفاده داخلی.\n- link: دقیقاً همان لینک ورودی، بدون تغییر.\n\nقواعد مهم:\n- واقعیت‌ها، اعداد، نقل‌قول‌ها، نسبت‌ها و سمت‌ها باید دقیق بمانند.\n- اگر متن آلمانی فقط «US-Präsident / Präsident der USA» نوشته و نام شخص را نیاورده، فقط بنویس «رئیس‌جمهور آمریکا» و نام حدس نزن.\n- اگر نام شخص صراحتاً آمده، نام را به فارسی رایج بنویس.\n- نام لاتین اشخاص، شهرها، کشورها و سازمان‌ها را داخل پرانتز اضافه نکن.\n- مخفف‌ها را لاتین نگه دار؛ مثل SPD، CDU، NATO، EU، BKA.\n- برای مخفف‌ها فقط در اولین استفاده توضیح فارسی کوتاه داخل پرانتز بیاور.\n- اعداد معمولی را با رقم فارسی بنویس.\n- URLها، کدها، شناسه‌ها، مدل‌ها، شماره پرونده، شماره پرواز و نمادهای بازار لاتین بمانند.\n- لحن بی‌طرف و خبری باشد؛ تحلیل شخصی اضافه نکن.\n- از تیترهای هیجانی یا اغراق‌آمیز خودداری کن.\n- متن فارسی باید برای مخاطب فارسی‌زبان طبیعی باشد، نه ترجمهٔ خشک.\n\nقواعد امتیاز اهمیت:\n۵ = خبر بسیار مهم، فوری، ایران، جنگ، انتخابات، بحران، تصمیم بزرگ دولت، حمله، مرگ چهره مهم، تصمیم مهم اتحادیه اروپا یا آلمان\n۴ = خبر مهم سیاسی، اقتصادی، مهاجرتی، امنیتی یا اجتماعی با اثر عمومی\n۳ = خبر قابل توجه اما غیر فوری\n۲ = خبر عادی، محلی، سبک یا کم‌اثر\n۱ = خبر کم‌اهمیت، سرگرمی، حاشیه‌ای یا محتوای کم‌ارزش برای کانال خبری\n\nاگر خبر درباره آلمان، مهاجرت، ایران، خاورمیانه، اروپا، اقتصاد، امنیت یا سیاست خارجی باشد، امتیاز را سخت‌گیرانه ولی با اولویت بالاتر بده.\n\nقاعده عناوین:\n- President / Präsident برای دولت یا کشور → رئیس‌جمهور\n- President / Präsident برای شرکت، بانک، باشگاه، فدراسیون، دانشگاه یا نهاد غیردولتی → رئیس، مدیر ارشد یا رئیس هیئت‌مدیره، بسته به متن\n- CEO / Chief Executive → مدیرعامل\n- Chairman / Chairwoman → رئیس هیئت‌مدیره\n- Chief of Police → رئیس پلیس\n- Head → رئیس یا مدیر، بسته به بافت\n\nمحدودیت طول:\n- teaser_fa بهتر است حدود ۸۰۰ تا ۱۸۰۰ کاراکتر باشد.\n- اگر مقاله بسیار مهم و پرجزئیات است، حداکثر تا حدود ۲۵۰۰ کاراکتر مجاز است.\n- پاراگراف‌ها کوتاه باشند و با خط خالی از هم جدا شوند.\n\nخروجی فقط JSON معتبر باشد:\n{\"title_fa\":\"...\", \"short_summary_fa\":\"...\", \"teaser_fa\":\"...\", \"category\":\"...\", \"hashtag_fa\":\"...\", \"link\":\"...\", \"importance\":4, \"importance_reason\":\"...\"}\n\nهیچ متن اضافه‌ای خارج از JSON ننویس.\n\nنمونه سبک:\n${styleSamples || \"—\"}\n\nواژه‌نامه:\n${pairs}\n`.trim();\n}\n\nfunction limitInputText(s = \"\", max = 12000) {\n  const text = String(s || \"\").trim();\n  if (text.length <= max) return text;\n  return text.slice(0, max).trim();\n}\n\nreturn items.map((item) => {\n  const j = item.json || {};\n\n  const title = (j.title || \"\").toString().trim();\n  const link = (j.link || j.url || \"\").toString().trim();\n\n  const articleDe = limitInputText(\n    j.full_article_de ||\n    j.teaser_de ||\n    j.teaser ||\n    j.content ||\n    j.summary ||\n    j.description ||\n    \"\",\n    12000\n  );\n\n  const sourceInfo = {\n    sourceHost: j.sourceHost || \"\",\n    sourceFeed: j.sourceFeed || \"\",\n    extractionDebug: j._full_fetch_debug || {}\n  };\n\n  const styleSamples = pickStyleSamples(2);\n\n  item.json.openai_body = {\n    model: \"gpt-4o-mini\",\n    temperature: 0.2,\n    max_tokens: 3000,\n    response_format: { type: \"json_object\" },\n    messages: [\n      {\n        role: \"system\",\n        content: buildSystem(glossary, styleSamples)\n      },\n      {\n        role: \"user\",\n        content:\n`Titel (DE):\n${title}\n\nArtikeltext (DE) — bevorzugt Full Web Article, sonst RSS-Fallback:\n${articleDe}\n\nLink:\n${link}\n\nTechnische Metadaten nur zur Orientierung, nicht veröffentlichen:\n${JSON.stringify(sourceInfo)}`\n      }\n    ]\n  };\n\n  item.json.link = link;\n  item.json._openai_input_debug = {\n    used_full_article: !!j.full_article_de,\n    article_input_length: articleDe.length,\n    sourceHost: j.sourceHost || \"\",\n    sourceFeed: j.sourceFeed || \"\"\n  };\n\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2832,
+        1424
+      ],
+      "id": "49e0ba62-c7a4-456f-8228-aea43c68fa3b",
+      "name": "Build OpenAI body"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "e18ac0f4-85be-4e6f-a17a-ccbc1efa4403",
+              "leftValue": "={{ $json.provider }}",
+              "rightValue": "openai",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6f40b08a-72e4-4783-90bc-46998839a211",
+      "name": "IF provider == gemini",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        1520
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1be37b28-d5b7-4f74-add3-b314096f0520",
+      "name": "➡ Next: Post-process FA / Caption1",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node — Pick title_fa (Gemini)\nconst out = $input.all().map(item => {\n  const r = item.json.body ?? item.json;\n  const raw = r?.candidates?.[0]?.content?.parts?.[0]?.text || '';\n  let title_fa = '', teaser_fa = '';\n\n  try {\n    const parsed = JSON.parse(raw);\n    title_fa  = (parsed.title_fa  || '').trim();\n    teaser_fa = (parsed.teaser_fa || '').trim();\n    if (parsed.link) item.json.link = parsed.link;\n  } catch (e) {\n    title_fa = raw.trim();\n  }\n\n  item.json.title_fa  = title_fa;\n  item.json.teaser_fa = teaser_fa;\n  return item;\n});\n\nreturn out;\n"
+      },
+      "id": "d0f0c3e0-2051-40ab-a7f4-c7809c392a9b",
+      "name": "Pick title_fa (Gemini)2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3056,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.gemini_en2fa }}",
+        "options": {}
+      },
+      "id": "f2361bb1-54be-4798-989d-40003f4b8d66",
+      "name": "Gemini Translate EN→FA (HTTP)1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2832,
+        1696
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_GEMINI_HEADER_AUTH_ID",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node — Build Gemini body (EN→FA)\nconst items = $input.all();\nconst staticData = $getWorkflowStaticData('global');\nconst glossary = staticData.glossary || {};\n\nfunction pairs(gloss){\n  return Object.entries(gloss).map(([de, fa]) => `- ${de} → ${fa}`).join('\\n');\n}\n\nfunction buildSystem(gloss){\n  return `\nتو یک مترجم حرفه‌ای هستی که متن‌های خبری انگلیسی را به فارسی روان و خبر‌نویس ترجمه می‌کنی.\nقوانین:\n- تیتر کوتاه و خبری؛ افزودن اطلاعات جدید ممنوع.\n- اگر «President of the US» بدون اسم آمد، فقط «رئیس‌جمهور آمریکا» بنویس و حدس نزن.\n- اسم‌های خاص را با معادل رایج فارسی و بلافاصله نام لاتین در پرانتز بنویس.\n- مخفف‌ها مثل «حزب سوسیال‌دموکرات آلمان (SPD)».\n- اعداد فارسی؛ علائم نگارشی فارسی؛ لحن بی‌طرف.\n- لینک منبع را در کلید link برگردان.\n- خروجی فقط JSON باشد: {\"title_fa\":\"...\", \"teaser_fa\":\"...\", \"link\":\"...\"}\n\nواژه‌نامه:\n${pairs(gloss)}\n`.trim();\n}\n\nreturn items.map(item => {\n  const j = item.json || {};\n  const titleEn  = (j.title_en || '').toString();\n  const teaserEn = (j.teaser_en || '').toString();\n  const link     = (j.link || '').toString();\n\n  j.gemini_en2fa = {\n    model: \"models/gemini-1.5-flash\",\n    system_instruction: { parts: [{ text: buildSystem(glossary) }] },\n    generationConfig: {\n      temperature: 0.2,\n      response_mime_type: \"application/json\",\n      maxOutputTokens: 700\n    },\n    contents: [\n      {\n        role: \"user\",\n        parts: [{\n          text:\n`English Title:\n${titleEn}\n\nEnglish Teaser:\n${teaserEn}\n\nLink:\n${link}`\n        }]\n      }\n    ]\n  };\n\n  return { json: j };\n});\n"
+      },
+      "id": "2df1426f-27ed-44c2-8854-3f5363fe4188",
+      "name": "Build Gemini body (EN→FA)2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2608,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node — Pick EN fields\nconst out = $input.all().map(it => {\n  const r = it.json.body ?? it.json;\n  const raw = r?.candidates?.[0]?.content?.parts?.[0]?.text || '';\n  let title_en='', teaser_en='', link='';\n  try {\n    const parsed = JSON.parse(raw);\n    title_en  = (parsed.title_en  || '').trim();\n    teaser_en = (parsed.teaser_en || '').trim();\n    link      = (parsed.link      || it.json.link || '').trim();\n  } catch (e) {\n    teaser_en = (raw || '').trim();\n    link = it.json.link || '';\n  }\n\n  it.json.title_en  = title_en;\n  it.json.teaser_en = teaser_en;\n  it.json.link      = link;\n  return it;\n});\n\nreturn out;\n"
+      },
+      "id": "db6b1cc5-9296-43d0-8756-a795ac179f5d",
+      "name": "Pick EN fields2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2384,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.gemini_de2en }}",
+        "options": {}
+      },
+      "id": "cbfd925a-c9fa-41b1-97b3-bfe9680bb37f",
+      "name": "Gemini Translate DE→EN (HTTP)3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2160,
+        1696
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_GEMINI_HEADER_AUTH_ID",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node — Build Gemini body (DE→EN) — FIXED\nconst items = $input.all();\n\nfunction buildSystem() {\n  return `\nYou are a professional translator.\nTask: Translate German news headline and first paragraph to **concise journalistic English**.\n- Do NOT add any facts.\n- Keep links untouched and pass them back as \"link\".\n- Output strict JSON: {\"title_en\":\"...\", \"teaser_en\":\"...\", \"link\":\"...\"}\n`.trim();\n}\n\nreturn items.map(item => {\n  const j = item.json || {};\n  const titleDe  = (j.title || '').toString();\n  const teaserDe = (j.teaser_de || j.teaser || j.content || '').toString();\n  const link     = (j.link || j.url || '').toString();\n\n  j.gemini_de2en = {\n    // ❗ این فیلد در v1beta نیازی به قرار گرفتن در body ندارد؛ مدل در URL تعیین می‌شود\n    systemInstruction: { parts: [{ text: buildSystem() }] },\n    generationConfig: {\n      temperature: 0.2,\n      responseMimeType: \"application/json\"\n    },\n    contents: [\n      {\n        role: \"user\",\n        parts: [{\n          text:\n`German Title:\n${titleDe}\n\nGerman Teaser:\n${teaserDe}\n\nLink:\n${link}`\n        }]\n      }\n    ]\n  };\n\n  return { json: j };\n});\n"
+      },
+      "id": "ce5dac98-1efd-4ad1-bcc0-b3a94105300c",
+      "name": "Build Gemini body (DE→EN)2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        1696
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "8a74a51f-5605-4564-ae33-9ce7964ce0d2",
+      "name": "🔌 Gemini Branch IN1",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2f90fb3f-3a66-4b62-a25f-4be942668ad1",
+              "leftValue": "={{ $json.twitter.ok }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5296,
+        1616
+      ],
+      "id": "085b1eaf-c48c-492d-9475-3c6e585028d7",
+      "name": "IF Twitter OK"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code — Twitter Gate (no image + geo priority + quotas + content filters)\nconst items = $input.all();\nconst staticData = $getWorkflowStaticData('global');\n\n// تنظیمات\nconst DAILY_CAP = 12;            // حداکثر ۱۲ توییت در روز\nconst MIN_INTERVAL_MIN = 90;     // حداقل فاصلهٔ ۹۰ دقیقه بین توییت‌ها\nconst ACTIVE_HOURS = [7, 23];    // 07:00 تا 23:00 (Europe/Berlin)\nconst SCORE_THRESHOLD = 45;      // آستانهٔ امتیاز\n\n// کلیدواژه‌های جغرافیایی\nconst kwIR_fa = /(ایران|تهران|اصفهان|شیراز|تبریز|اهواز|مجلس|سپاه|بانک مرکزی|انتخابات ایران|رئیس‌جمهور ایران)/;\nconst kwIR_de = /\\b(Iran|Teheran|Tehran|Irans|iranisch)\\b/i;\nconst kwME_fa = /(خاورمیانه|غزه|فلسطین|اسرائیل|لبنان|سوریه|عراق|یمن|بحرین|قطر|عمان|کویت|امارات|عربستان|اردن|مصر|ترکیه)/;\nconst kwME_de = /\\b(Naher Osten|Gaza|Israel|Libanon|Syrien|Irak|Jemen|Bahrain|Katar|Oman|Kuwait|VAE|Saudi|Jordanien|Ägypten|Türkei|Palästina)\\b/i;\n\nfunction now(){ return new Date(); }\nfunction sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}\nfunction hours(d){ return d.getHours()+d.getMinutes()/60; }\n\nfunction hostWeight(h=''){\n  h = h.replace(/^www\\./,'').toLowerCase();\n  if (/spiegel\\.de$|tagesschau\\.de$|faz\\.net$|dw\\.com$/.test(h)) return 40;\n  if (/heise\\.de$|golem\\.de$|sueddeutsche\\.de$|handelsblatt\\.com$/.test(h)) return 30;\n  return 15;\n}\nfunction topicBoost(t=''){\n  t = (t||'').toLowerCase();\n  if (/(ukraine|gaza|iran|wirtschaft|inflation|eu|usa|china|israel|\\bki\\b|künstliche)/i.test(t)) return 20;\n  return 0;\n}\nfunction freshness(iso){\n  if (!iso) return 0;\n  const ts = Date.parse(iso); if (Number.isNaN(ts)) return 0;\n  const ageMin = (Date.now()-ts)/60000;\n  if (ageMin<=90) return 30;\n  if (ageMin<=360) return 20;\n  if (ageMin<=720) return 8;\n  return 0;\n}\nfunction geoScore(j){\n  const mix = [j.title_fa||'', j.teaser_fa||'', j.content||''].join(' ');\n  if (kwIR_fa.test(mix) || kwIR_de.test(mix)) return {label:'iran',score:80};\n  if (kwME_fa.test(mix) || kwME_de.test(mix)) return {label:'mena',score:50};\n  return {label:'other',score:0};\n}\n\n// 🧹 فیلتر ۱: حذف پادکست‌ها\nfunction isPodcast(j){\n  const title   = (j.title_fa || j.title || '').toLowerCase();\n  const teaser  = (j.teaser_fa || '').toLowerCase();\n  const content = (j.content || '').toLowerCase();\n  const link    = (j.link || '').toLowerCase();\n  const all = [title, teaser, content, link].join(' ');\n\n  const re = /(پادکست|پادکست خبری|پادکست SZ|podcast|podcasts|audio-podcast|audiopodcast|jetzt anhören|jetzt reinhören)/i;\n  return re.test(all);\n}\n\n// 🧹 فیلتر ۲: خلاصه اخبار / چندخبره / تیکر / راؤنداپ\nfunction isMultiNewsRoundup(j){\n  const title   = (j.title_fa || j.title || '').toLowerCase();\n  const teaser  = (j.teaser_fa || '').toLowerCase();\n  const content = (j.content || '').toLowerCase();\n  const link    = (j.link || '').toLowerCase();\n  const all = [title, teaser, content, link].join(' ');\n\n  const re = /(خلاصه اخبار روز|خلاصه اخبار|خبرهای کوتاه|مرور خبرها|جمع‌بندی خبرها|مرور روز|مرور امروز|ticker|liveticker|live-ticker|newsticker|transfer-ticker|transfer-ticker|im ticker|ticker:\\s|ticker –|ticker -|ticker zu|kurzmeldungen|kurznews|im überblick|überblick|der tag kompakt|was heute wichtig ist|die lage am)/i;\n  return re.test(all);\n}\n\n// 🧹 فیلتر ۳: بلاگ / وبلاگ\nfunction isBlogLike(j){\n  const title   = (j.title_fa || j.title || '').toLowerCase();\n  const teaser  = (j.teaser_fa || '').toLowerCase();\n  const content = (j.content || '').toLowerCase();\n  const link    = (j.link || '').toLowerCase();\n  const host    = (j.sourceHost || '').toLowerCase();\n  const all = [title, teaser, content].join(' ');\n\n  // blog در آدرس یا هاست\n  if (/blog/.test(link) || /blog/.test(host)) return true;\n\n  // ستون / نظر شخصی (اگر خواستی بعداً می‌تونیم دقیق‌تر کنیم)\n  if (/(ستون|یادداشت|kolumne|kommentar|meinung)/i.test(all)) return true;\n\n  return false;\n}\n\n// ساخت متن توییت\nfunction buildTweetText(title, teaser, link) {\n  const MAX = 280;\n\n  // تمیز کردن متن\n  const clean = (s = '') =>\n    s.toString().replace(/\\s+/g, ' ').trim();\n\n  const t = clean(title);\n  const p = clean(teaser);\n\n  // تیتر + یک خط خالی + پاراگراف اول\n  let base = t;\n  if (p) base += (base ? '\\n\\n' : '') + p;\n\n  // توییتر هر لینک را حدود ۲۳ کاراکتر حساب می‌کند (+ ۱ کاراکتر برای \\n)\n  const URL_RESERVED = 24; // 23 for t.co + '\\n'\n  const pad = link ? URL_RESERVED : 0;\n  const room = MAX - pad;\n\n  if (room <= 0) return link || '';\n\n  if (base.length <= room) {\n    return link ? `${base}\\n${link}` : base;\n  }\n\n  // کوتاه کردن روی مرز کلمه\n  const cut = base.slice(0, room - 1);\n  let idx = cut.lastIndexOf(' ');\n  if (idx < 40) idx = room - 1;\n  const short = cut.slice(0, idx) + '…';\n\n  return link ? `${short}\\n${link}` : short;\n}\n\n// ریست روزانه\nconst n = now();\nconst lastReset = staticData.twitter_last_reset_ts ? new Date(staticData.twitter_last_reset_ts) : null;\nif (!lastReset || !sameDay(n,lastReset)) {\n  staticData.twitter_today_count = 0;\n  staticData.twitter_last_reset_ts = n.toISOString();\n}\nconst todayCount = staticData.twitter_today_count || 0;\nconst lastTs = staticData.last_tweet_ts ? new Date(staticData.last_tweet_ts) : null;\nconst sinceMin = lastTs ? (n-lastTs)/60000 : Infinity;\nconst inHours = (() => {\n  const h = hours(n);\n  return h >= ACTIVE_HOURS[0] && h <= ACTIVE_HOURS[1];\n})();\n\nreturn items.map(it => {\n  const j = it.json || {};\n  const link   = (j.link || '').toString().trim();\n  const title  = (j.title_fa || j.title || '').toString().trim();\n  const teaser = (j.teaser_fa || '').toString().trim();\n\n  const geo = geoScore(j);\n  let score = 0;\n  score += hostWeight(j.sourceHost || '');\n  score += topicBoost(title);\n  score += freshness(j.isoDate || '');\n  score += geo.score;\n\n  // 🧱 دلایل حذف (برای دیباگ)\n  const reasons = [];\n  if (isPodcast(j))      reasons.push('podcast');\n  if (isMultiNewsRoundup(j)) reasons.push('multi_news_roundup');\n  if (isBlogLike(j))     reasons.push('blog_like');\n\n  const filteredOut = reasons.length > 0;\n\n  if (filteredOut) {\n    // اگر دوست داشته باشی، می‌تونیم score را هم صفر کنیم\n    score = 0;\n  }\n\n  const ok =\n    (score >= SCORE_THRESHOLD) &&\n    (todayCount < DAILY_CAP) &&\n    (sinceMin >= MIN_INTERVAL_MIN) &&\n    inHours &&\n    !filteredOut;\n\n  const okBool = !!ok;\n\n  it.json.twitter = {\n    ok: okBool,\n    score,\n    geo: geo.label,\n    filteredOut,\n    filteredReasons: reasons,\n    text: buildTweetText(title, teaser, link),\n  };\n\n  return it;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5072,
+        1616
+      ],
+      "id": "00fb879d-0a31-4749-aa80-089c394a5e0e",
+      "name": "Code - Twitter Gate1"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.twitter.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        5744,
+        1552
+      ],
+      "id": "d9314e90-78b3-422d-b102-56cdd8ada992",
+      "name": "Create Tweet1",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "YOUR_TWITTER_OAUTH_API",
+          "name": "X account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nsd.twitter_today_count = (sd.twitter_today_count||0)+1;\nsd.last_tweet_ts = new Date().toISOString();\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5968,
+        1552
+      ],
+      "id": "dda017d0-ce11-418e-9727-84a2cbe8d9bb",
+      "name": "Code-Twitter Static Data1"
+    },
+    {
+      "parameters": {
+        "batchSize": 3,
+        "options": {}
+      },
+      "id": "88a683b6-b72e-4544-9932-9cb6b2a1ecbe",
+      "name": "SplitInBatches1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        5520,
+        1616
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 59,
+        "unit": "minutes"
+      },
+      "id": "1c116685-3de2-4c5c-8456-45beae0b958e",
+      "name": "Wait 60s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        6192,
+        1616
+      ],
+      "webhookId": "YOUR_WAIT_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "url": "https://www.tagesschau.de/xml/rss2/",
+        "options": {}
+      },
+      "id": "8360bc66-6411-4f6e-93d5-62e4dfe9c89b",
+      "name": "RSS Read (Tagesschau)",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        1712
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "=telegram.textChunks",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        5520,
+        1360
+      ],
+      "id": "94c7ab42-9733-458a-afda-7afd5410e715",
+      "name": "Explode textChunks"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.telegram.textChunks }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        5744,
+        1360
+      ],
+      "id": "700ec2af-55af-4e31-8aa2-3de3443c75e3",
+      "name": "Send a text message",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_API_ID",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$json.link}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "text",
+              "outputPropertyName": "html"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        592,
+        1456
+      ],
+      "id": "19a549ac-a438-4399-9038-12c072d30d89",
+      "name": "Fetch Full Article",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction toStr(v) {\n  if (v == null) return '';\n  if (typeof v === 'string') return v;\n  if (typeof v === 'object') return JSON.stringify(v);\n  return String(v);\n}\n\nfunction decodeEntities(s = '') {\n  return s\n    .replace(/\\\\u003c/g, '<')\n    .replace(/\\\\u003e/g, '>')\n    .replace(/\\\\u0026/g, '&')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&apos;/g, \"'\")\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>');\n}\n\nfunction stripTags(html = '') {\n  return decodeEntities(html)\n    .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n    .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction extractJsonLdArticleBody(html = '') {\n  const scripts = [...html.matchAll(/<script[^>]+type=[\"']application\\/ld\\+json[\"'][^>]*>([\\s\\S]*?)<\\/script>/gi)];\n\n  for (const m of scripts) {\n    let raw = decodeEntities(m[1]).trim();\n\n    try {\n      const parsed = JSON.parse(raw);\n      const arr = Array.isArray(parsed) ? parsed : [parsed];\n\n      const stack = [...arr];\n      while (stack.length) {\n        const obj = stack.shift();\n        if (!obj || typeof obj !== 'object') continue;\n\n        const type = obj['@type'];\n        const isArticle =\n          type === 'Article' ||\n          type === 'NewsArticle' ||\n          (Array.isArray(type) && type.some(t => ['Article', 'NewsArticle'].includes(t)));\n\n        if (isArticle) {\n          const body =\n            obj.articleBody ||\n            obj.description ||\n            obj.headline ||\n            '';\n\n          if (body && String(body).length > 200) {\n            return stripTags(String(body));\n          }\n        }\n\n        for (const v of Object.values(obj)) {\n          if (Array.isArray(v)) stack.push(...v);\n          else if (v && typeof v === 'object') stack.push(v);\n        }\n      }\n    } catch {}\n  }\n\n  return '';\n}\n\nfunction extractParagraphs(html = '') {\n  let s = html\n    .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n    .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n    .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ')\n    .replace(/<svg[\\s\\S]*?<\\/svg>/gi, ' ')\n    .replace(/<iframe[\\s\\S]*?<\\/iframe>/gi, ' ');\n\n  const pMatches = [...s.matchAll(/<p[^>]*>([\\s\\S]*?)<\\/p>/gi)]\n    .map(m => stripTags(m[1]))\n    .map(x => x.replace(/\\s+/g, ' ').trim())\n    .filter(x => x.length > 35)\n    .filter(x => !/(anzeige|werbung|newsletter|podcast|mehr zum thema|lesen sie auch|teilen|kommentare|cookie|datenschutz|abo|login|registrieren)/i.test(x));\n\n  return [...new Set(pMatches)].join('\\n\\n').slice(0, 12000).trim();\n}\n\nfunction extractMetaImage(html = '') {\n  const patterns = [\n    /<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i,\n    /<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i,\n    /<meta[^>]+name=[\"']twitter:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i,\n    /<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+name=[\"']twitter:image[\"']/i,\n  ];\n\n  for (const re of patterns) {\n    const m = html.match(re);\n    if (m?.[1]) return decodeEntities(m[1].trim());\n  }\n  return '';\n}\n\nfunction absolutize(url = '', base = '') {\n  if (!url) return '';\n  if (/^https?:\\/\\//i.test(url)) return url;\n  if (url.startsWith('//')) return 'https:' + url;\n  try {\n    return new URL(url, base).toString();\n  } catch {\n    return url;\n  }\n}\n\nreturn items.map(item => {\n  const j = item.json || {};\n  const html = toStr(j.html || j.data || j.body || j.response || '');\n  const safeLink = j.link || j.originalLink || j.url || j.guid || '';\n\n  const fromJsonLd = extractJsonLdArticleBody(html);\n  const fromParagraphs = extractParagraphs(html);\n  const fullArticle = fromJsonLd || fromParagraphs;\n\n  const fallback = j.teaser_de || j.content || j.summary || j.description || '';\n  const metaImage = absolutize(extractMetaImage(html), safeLink);\n\n  return {\n    json: {\n      ...j,\n      link: safeLink,\n      originalLink: safeLink,\n      _full_fetch_debug: {\n        html_length: html.length,\n        jsonld_length: fromJsonLd.length,\n        paragraphs_length: fromParagraphs.length,\n        full_article_length: fullArticle.length,\n        used_fallback: !fullArticle\n      },\n      full_article_de: fullArticle || fallback,\n      imageUrl: j.imageUrl || metaImage || '',\n      teaser_de: fullArticle || fallback\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        1520
+      ],
+      "id": "ba6ee70c-8b80-4d96-9126-14b81c6336ff",
+      "name": "Extract Main Article"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        816,
+        1520
+      ],
+      "id": "151c4a28-bf72-4c3a-8ca5-99a37f6b5c8f",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const MIN_IMPORTANCE = 3; \n// اگر کانال خیلی شلوغ شد، بگذار 4\n\nreturn $input.all().filter(item => {\n  const j = item.json || {};\n  const importance = Number(j.importance || 0);\n\n  return importance >= MIN_IMPORTANCE;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        1520
+      ],
+      "id": "05905980-3c06-4416-8d4e-383770f9703d",
+      "name": "Filter by Importance"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00",
+          "mode": "list",
+          "cachedResultName": "Deutsch_A1_B1_GoogleSheet_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sentences",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "1a83eb65-09d8-47b9-8b1a-ee5be116abfa",
+      "name": "Read Sentences",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -1424,
+        2912
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_OAUTH_API_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "persian-empty",
+              "leftValue": "={{ $json.Persian }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e53977bb-3f9b-4c16-abb1-eb30fa2e61e0",
+      "name": "Only Empty Persian",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1200,
+        2912
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "4df0c588-b1a9-4e3c-81ef-ef04b495b9c9",
+      "name": "Split in Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -976,
+        2912
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nconst prompt = `You are preparing educational content for a Telegram channel for Persian-speaking people living in Germany.\n\nInput German sentence:\n${item.German}\n\nTask:\n\n1. Translate the sentence into natural Persian.\n2. Extract the most useful German word or phrase from the sentence.\n3. Write its Persian meaning.\n4. Choose a word that is useful in daily life in Germany.\n5. Output ONLY valid JSON.\n\nJSON format:\n\n{\n\"persian\": \"...\",\n\"keywordGerman\": \"...\",\n\"keywordPersian\": \"...\"\n}\n`;\n\nreturn [{\njson: {\n...item,\nprompt\n}\n}];\n"
+      },
+      "id": "c4774f4c-4724-4dbd-9c18-a96cf2ff4b21",
+      "name": "Build GPT Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        2848
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nconst original = $('Build GPT Prompt').first().json;\nconst raw = input.choices?.[0]?.message?.content || '';\n\nlet cleaned = raw\n  .replace(/```json/g, '')\n  .replace(/```/g, '')\n  .trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  parsed = {\n    persian: '',\n    keywordGerman: '',\n    keywordPersian: ''\n  };\n}\n\nreturn [{\n  json: {\n    ...original,\n    Persian: parsed.persian || '',\n     KeywordGerman: parsed.keywordGerman || '',\n    KeywordPersian: parsed.keywordPersian || ''\n  }\n}];"
+      },
+      "id": "78a6c61c-078f-41a9-bf36-0a713e4dc407",
+      "name": "Parse GPT JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        2848
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00",
+          "mode": "list",
+          "cachedResultName": "Deutsch_A1_B1_GoogleSheet_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sentences",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{$json.ID}}",
+            "Published": "={{$json.Published}}",
+            "Level": "={{$json.Level}}",
+            "Persian": "={{$json.Persian}}",
+            "German": "={{$json.German}}",
+            "KeywordGerman": "={{$json.KeywordGerman}}",
+            "KeywordPersian": "={{$json.KeywordPersian}}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "German",
+              "displayName": "German",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Persian",
+              "displayName": "Persian",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "KeywordGerman",
+              "displayName": "KeywordGerman",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "KeywordPersian",
+              "displayName": "KeywordPersian",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Level",
+              "displayName": "Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Published",
+              "displayName": "Published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "cae79548-d51d-4086-a411-37835e0bf50c",
+      "name": "Update Sentence Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -80,
+        2848
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_COOGLE_SHEETS_OATH_API",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "fe173b3a-3ed8-4754-a04c-62a0f9c95012",
+      "name": "Wait 1 Second",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        2912
+      ],
+      "webhookId": "wait-generated-id"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4.1-mini\",\n  \"temperature\": 0.3,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "eb362ded-c86d-42e9-9eb6-f4a137da5049",
+      "name": "GPT - Translate + Keyword",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -528,
+        2848
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPEN_AI_API_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "published-false",
+              "leftValue": "={{ String($json.Published).trim().toUpperCase() }}",
+              "rightValue": "FALSE",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "persian-not-empty",
+              "leftValue": "={{ $json.Persian }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "keyword-german-not-empty",
+              "leftValue": "={{ $json.KeywordGerman }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "keyword-persian-not-empty",
+              "leftValue": "={{ $json.KeywordPersian }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4baafbdd-3f3c-4ce4-b899-516b344a7a7a",
+      "name": "Only Ready Unpublished",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -976,
+        2320
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "4087fe6e-c182-4a36-9c73-d0c517c3f601",
+      "name": "Take First Sentence",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nconst text = `🇩🇪 آلمانی کاربردی برای زندگی در آلمان\n\n📘 جمله روز\n\n🏷 سطح: ${item.Level || 'A1-B1'}\n\n🇩🇪\n${item.German}\n\n🇮🇷\n${item.Persian}\n\n🔹 #واژه_امروز\n\n${item.KeywordGerman}= ${item.KeywordPersian}\n\n#آلمانی_کاربردی\n#زندگی_در_آلمان \n\n@German_news_fa`;\n\nreturn [{ json: { ...item, telegramText: text } }];"
+      },
+      "id": "66190ca9-1fca-4d0c-a914-aca280dac1c4",
+      "name": "Build Telegram Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{$json.telegramText}}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_notification": false,
+          "parse_mode": "=None"
+        }
+      },
+      "id": "e0fd1566-ed7c-47d9-943e-1e9a0ec4c734",
+      "name": "Send Sentence To Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -304,
+        2320
+      ],
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_API_ID",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00",
+          "mode": "list",
+          "cachedResultName": "Deutsch_A1_B1_GoogleSheet_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sentences",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{$json.ID}}",
+            "German": "={{$json.German}}",
+            "Persian": "={{$json.Persian}}",
+            "KeywordGerman": "={{$json.KeywordGerman}}",
+            "KeywordPersian": "={{$json.KeywordPersian}}",
+            "Level": "={{$json.Level}}",
+            "Published": "TRUE"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "German",
+              "displayName": "German",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Persian",
+              "displayName": "Persian",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "KeywordGerman",
+              "displayName": "KeywordGerman",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "KeywordPersian",
+              "displayName": "KeywordPersian",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Level",
+              "displayName": "Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Published",
+              "displayName": "Published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "2c13c5eb-4ea2-4c73-a7c0-4bbfa4b25563",
+      "name": "Mark Sentence As Published",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        144,
+        2320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 17,
+              "triggerAtMinute": 15
+            }
+          ]
+        }
+      },
+      "id": "ce3d9ddb-b3cd-4e9d-9076-73309e438f47",
+      "name": "Schedule Trigger1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1424,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00",
+          "mode": "list",
+          "cachedResultName": "Deutsch_A1_B1_GoogleSheet_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sentences",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "e08561ed-caf2-4583-8982-af130a439e53",
+      "name": "Read Sentences1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -1200,
+        2320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEET_OAUTH_API_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00",
+          "mode": "list",
+          "cachedResultName": "Deutsch_A1_B1_GoogleSheet_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Dialogs",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "73e3df9c-0203-4d4e-9cc4-d17efb8dbd23",
+      "name": "Read Dialogs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -1424,
+        2624
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEET_OAUTH_API_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "persian-dialog-empty",
+              "leftValue": "={{ $json.PersianDialog }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "172f795b-80bd-490c-baad-806b8bac7675",
+      "name": "Only Empty Persian Dialog",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1200,
+        2624
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4.1-mini\",\n  \"temperature\": 0.3,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.prompt) }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "52f81ef0-d913-4f11-a813-4da9940c0880",
+      "name": "GPT - Translate Dialog + Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -528,
+        2544
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_API_ID",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00",
+          "mode": "list",
+          "cachedResultName": "Deutsch_A1_B1_GoogleSheet_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Dialogs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{$json.ID}}",
+            "Title": "={{$json.Title}}",
+            "GermanDialog": "={{$json.GermanDialog}}",
+            "PersianDialog": "={{$json.PersianDialog}}",
+            "Vocabulary": "={{$json.Vocabulary}}",
+            "Keywords": "={{$json.Keywords}}",
+            "Level": "={{$json.Level}}",
+            "Published": "={{$json.Published}}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "GermanDialog",
+              "displayName": "GermanDialog",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PersianDialog",
+              "displayName": "PersianDialog",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vocabulary",
+              "displayName": "Vocabulary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Keywords",
+              "displayName": "Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Level",
+              "displayName": "Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Published",
+              "displayName": "Published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "11b5a921-0ada-4e4b-a213-608adbb3ab82",
+      "name": "Update Dialog Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -80,
+        2544
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEET_OAUTH_API_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "f8994d04-f79a-4a9a-9246-6b02202bd01a",
+      "name": "Split in Batches1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -976,
+        2624
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nconst prompt = `You are creating educational German-learning content for Persian-speaking people living in Germany.\n\nDialog title:\n${item.Title}\n\nGerman dialog:\n${item.GermanDialog}\n\nYour task:\n\n1. Translate the entire dialog into fluent, natural Persian.\n2. The Persian text must sound like a real conversation between native Persian speakers.\n3. Prefer natural Persian over literal translation.\n4. Preserve the meaning and intention of every sentence.\n5. Do NOT translate word-by-word.\n6. Avoid textbook-style language.\n7. Avoid overly formal Persian.\n8. Avoid slang or regional expressions.\n9. Use clear and modern Persian that is easy to understand.\n10. Keep the speaker structure exactly as in the original dialog.\n11. Extract 3-5 useful German words or phrases from the dialog.\n12. Choose expressions that learners will actually use in Germany.\n13. Write a Persian meaning for each keyword.\n14. Do NOT explain grammar.\n15. Do NOT add extra commentary.\n16. Output ONLY valid JSON.\n\nRequired JSON format:\n\n{\n\"persianDialog\": \"...\",\n\"keywords\": \"Guten Morgen = صبح بخیر\\nWie geht es dir? = حالت چطور است؟\\nschlafen = خوابیدن\",\n\"level\": \"A1\"\n}`;\n\nreturn [{ json: { ...item, prompt } }];\n"
+      },
+      "id": "6c2889f2-f2b8-4e04-bca6-e556adecde60",
+      "name": "Build GPT Prompt1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        2544
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst original = $('Build GPT Prompt1').first().json;\nconst raw = input.choices?.[0]?.message?.content || '';\n\nlet cleaned = raw\n  .replace(/```json/g, '')\n  .replace(/```/g, '')\n  .trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  parsed = { persianDialog: '', keywords: '', level: original.Level || 'A1' };\n}\n\nreturn [{\n  json: {\n    ...original,\n    PersianDialog: parsed.persianDialog || '',\n    Keywords: parsed.keywords || '',\n    Level: parsed.level || original.Level || 'A1'\n  }\n}];"
+      },
+      "id": "18407760-0061-4cb9-860a-15d96f8d212c",
+      "name": "Parse GPT JSON1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        2544
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "id": "7ff82e21-d291-443e-9d65-e8aea3c0afba",
+      "name": "Wait 1 Second1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        2624
+      ],
+      "webhookId": "wait-dialog-generated-id"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "ceb9d74a-55e1-4a1a-8364-54069b64214f",
+      "name": "Schedule Trigger - Saturday 10",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1424,
+        3440
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "published-false",
+              "leftValue": "={{ String($json.Published).trim().toUpperCase() }}",
+              "rightValue": "FALSE",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "persian-dialog-not-empty",
+              "leftValue": "={{ $json.PersianDialog }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "keywords-not-empty",
+              "leftValue": "={{ $json.Keywords }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6f2230a9-83bc-439d-bf98-8d5c37230946",
+      "name": "Only Ready Unpublished Dialogs",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -976,
+        3440
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "726ddfa9-eea3-4db0-96d6-d9c624569a25",
+      "name": "Take First Dialog",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        3440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nfunction cleanDialog(text = '') {\n  return String(text || '')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim();\n}\n\nconst germanDialog = cleanDialog(item.GermanDialog);\nconst persianDialog = cleanDialog(item.PersianDialog);\nconst keywords = cleanDialog(item.Keywords);\n\nconst text = `🎭 دیالوگ هفته\n\n📍 ${item.Title || 'دیالوگ آلمانی#'}\n🏷 سطح: ${item.Level || 'A1-B1'}\n\nمتن آلمانی\n\n${germanDialog}\n\n────────────\n\nترجمه فارسی\n\n${persianDialog}\n\n────────────\n\n🔹 عبارت‌های کاربردی\n\n${keywords}\n\n@German_news_fa `;\n\n\nreturn [{ json: { ...item, telegramText: text } }];"
+      },
+      "id": "2630c800-52fa-4fd6-a17d-47ccc9d3e86b",
+      "name": "Build Telegram Dialog Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        3440
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{$json.telegramText}}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "1996e7da-ff5f-490e-8a62-7c3192671214",
+      "name": "Send Dialog To Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -304,
+        3440
+      ],
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_API_ID",
+          "name": "Telegram account Test"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00",
+          "mode": "list",
+          "cachedResultName": "Deutsch_A1_B1_GoogleSheet_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Dialogs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{$json.ID}}",
+            "Title": "={{$json.Title}}",
+            "GermanDialog": "={{$json.GermanDialog}}",
+            "PersianDialog": "={{$json.PersianDialog}}",
+            "Vocabulary": "={{$json.Vocabulary}}",
+            "Keywords": "={{$json.Keywords}}",
+            "Level": "={{$json.Level}}",
+            "Published": "TRUE"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "GermanDialog",
+              "displayName": "GermanDialog",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PersianDialog",
+              "displayName": "PersianDialog",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vocabulary",
+              "displayName": "Vocabulary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Keywords",
+              "displayName": "Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Level",
+              "displayName": "Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Published",
+              "displayName": "Published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ccb6051c-db0f-4b58-8bf2-8af5c2a8fa23",
+      "name": "Mark Dialog As Published",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -80,
+        3440
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00",
+          "mode": "list",
+          "cachedResultName": "Deutsch_A1_B1_GoogleSheet_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lqHF1sHtwl43JTeCNaKbSjl9Jq9Q87n9xmS4GJuEn00/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Dialogs",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b74fd75d-e258-4325-8aa3-efcd00e9f568",
+      "name": "Read Dialogs1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -1200,
+        3440
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEET_OAUTH_API_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Build Telegram Message').first().json;\n\nreturn [{\n  json: {\n    ...original,\n    telegramResult: $json\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        2320
+      ],
+      "id": "a150e47b-0489-48e8-83a6-351d81501998",
+      "name": "Restore Original Sentence Data"
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 1
+            }
+          ]
+        }
+      },
+      "id": "55a82430-e02b-48ed-aa6a-574edca0fb13",
+      "name": "Cron (every 1 hour)",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        1616
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "IF provider == openai": {
+      "main": [
+        [
+          {
+            "node": "🔌 Gemini Branch IN",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🔌 Gemini Branch IN1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build OpenAI body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build OpenAI body",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🔌 Gemini Branch IN1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Caption": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Has Binary?": {
+      "main": [
+        [
+          {
+            "node": "Build Caption",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "IF Has Binary?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Choose Place": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Choose Place",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set provider (openai|gemini)": {
+      "main": [
+        [
+          {
+            "node": "IF provider == gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build caption": {
+      "main": [
+        [
+          {
+            "node": "Build Telegram payload1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Telegram payload1": {
+      "main": [
+        [
+          {
+            "node": "IF has image2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code - Twitter Gate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF has image2": {
+      "main": [
+        [
+          {
+            "node": "Send a photo message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read (Spiegel News)": {
+      "main": [
+        [
+          {
+            "node": "Merge (Spiegel + FAZ)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read (focus)": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a photo message1": {
+      "main": [
+        [
+          {
+            "node": "Explode textChunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge (Spiegel + FAZ)": {
+      "main": [
+        [
+          {
+            "node": "Merge (RSS All)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge(SZ + Tagesschau)": {
+      "main": [
+        [
+          {
+            "node": "Merge((SZ+TG)+(Fo+Welt))",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read (SZ)": {
+      "main": [
+        [
+          {
+            "node": "Merge(SZ + Tagesschau)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge (RSS All)": {
+      "main": [
+        [
+          {
+            "node": "Time window (last 15 min)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge((SZ+TG)+(Fo+Welt))": {
+      "main": [
+        [
+          {
+            "node": "Merge (RSS All)",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Time window (last 15 min)": {
+      "main": [
+        [
+          {
+            "node": "Code (Static Data)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code (Static Data)": {
+      "main": [
+        [
+          {
+            "node": "Code (Normalize + Dedupe + Sort)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code (Normalize + Dedupe + Sort)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Fetch Full Article",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Merge((SZ+TG)+(Fo+Welt))",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read (FAZ )": {
+      "main": [
+        [
+          {
+            "node": "Merge (Spiegel + FAZ)",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Ensure Parens (Glossary)": {
+      "main": [
+        [
+          {
+            "node": "Filter by Importance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read(BBC)": {
+      "main": [
+        [
+          {
+            "node": "Merge (FA style feeds)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge (FA style feeds)": {
+      "main": [
+        [
+          {
+            "node": "Code (staticData.style_bank)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code (Post-process FA)": {
+      "main": [
+        [
+          {
+            "node": "Ensure Parens (Glossary)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick title_fa (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Code (Post-process FA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "Pick title_fa (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Translate (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Build OpenAI body": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "OpenAI Translate (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF provider == gemini": {
+      "main": [
+        [
+          {
+            "node": "Build OpenAI body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🔌 Gemini Branch IN1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick title_fa (Gemini)2": {
+      "main": [
+        [
+          {
+            "node": "➡ Next: Post-process FA / Caption1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Translate EN→FA (HTTP)1": {
+      "main": [
+        [
+          {
+            "node": "Pick title_fa (Gemini)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gemini body (EN→FA)2": {
+      "main": [
+        [
+          {
+            "node": "Gemini Translate EN→FA (HTTP)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick EN fields2": {
+      "main": [
+        [
+          {
+            "node": "Build Gemini body (EN→FA)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Translate DE→EN (HTTP)3": {
+      "main": [
+        [
+          {
+            "node": "Pick EN fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gemini body (DE→EN)2": {
+      "main": [
+        [
+          {
+            "node": "Gemini Translate DE→EN (HTTP)3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔌 Gemini Branch IN1": {
+      "main": [
+        [
+          {
+            "node": "Build Gemini body (DE→EN)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "➡ Next: Post-process FA / Caption1": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "IF Twitter OK": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Twitter Gate1": {
+      "main": [
+        [
+          {
+            "node": "IF Twitter OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Tweet1": {
+      "main": [
+        [
+          {
+            "node": "Code-Twitter Static Data1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches1": {
+      "main": [
+        [
+          {
+            "node": "Create Tweet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code-Twitter Static Data1": {
+      "main": [
+        [
+          {
+            "node": "Wait 60s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 60s": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read (Tagesschau)": {
+      "main": [
+        [
+          {
+            "node": "Merge(SZ + Tagesschau)",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Explode textChunks": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Full Article": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Main Article": {
+      "main": [
+        [
+          {
+            "node": "Set provider (openai|gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Extract Main Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter by Importance": {
+      "main": [
+        [
+          {
+            "node": "Build caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentences": {
+      "main": [
+        [
+          {
+            "node": "Only Empty Persian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Empty Persian": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split in Batches": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Build GPT Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build GPT Prompt": {
+      "main": [
+        [
+          {
+            "node": "GPT - Translate + Keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse GPT JSON": {
+      "main": [
+        [
+          {
+            "node": "Update Sentence Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sentence Row": {
+      "main": [
+        [
+          {
+            "node": "Wait 1 Second",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1 Second": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT - Translate + Keyword": {
+      "main": [
+        [
+          {
+            "node": "Parse GPT JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Ready Unpublished": {
+      "main": [
+        [
+          {
+            "node": "Take First Sentence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Take First Sentence": {
+      "main": [
+        [
+          {
+            "node": "Build Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Send Sentence To Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Sentence To Telegram": {
+      "main": [
+        [
+          {
+            "node": "Restore Original Sentence Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Read Sentences1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentences1": {
+      "main": [
+        [
+          {
+            "node": "Only Ready Unpublished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Dialogs": {
+      "main": [
+        [
+          {
+            "node": "Only Empty Persian Dialog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Empty Persian Dialog": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT - Translate Dialog + Keywords": {
+      "main": [
+        [
+          {
+            "node": "Parse GPT JSON1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Dialog Row": {
+      "main": [
+        [
+          {
+            "node": "Wait 1 Second1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split in Batches1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Build GPT Prompt1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build GPT Prompt1": {
+      "main": [
+        [
+          {
+            "node": "GPT - Translate Dialog + Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse GPT JSON1": {
+      "main": [
+        [
+          {
+            "node": "Update Dialog Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1 Second1": {
+      "main": [
+        [
+          {
+            "node": "Split in Batches1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger - Saturday 10": {
+      "main": [
+        [
+          {
+            "node": "Read Dialogs1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Ready Unpublished Dialogs": {
+      "main": [
+        [
+          {
+            "node": "Take First Dialog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Take First Dialog": {
+      "main": [
+        [
+          {
+            "node": "Build Telegram Dialog Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Telegram Dialog Message": {
+      "main": [
+        [
+          {
+            "node": "Send Dialog To Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Dialog To Telegram": {
+      "main": [
+        [
+          {
+            "node": "Mark Dialog As Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Dialogs1": {
+      "main": [
+        [
+          {
+            "node": "Only Ready Unpublished Dialogs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Original Sentence Data": {
+      "main": [
+        [
+          {
+            "node": "Mark Sentence As Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron (every 1 hour)": {
+      "main": [
+        [
+          {
+            "node": "RSS Read (FAZ )",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read (SZ)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read (Spiegel News)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read (focus)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read (Tagesschau)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read(BBC)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "8a527f88-8535-46b7-8607-beffa1b35aaa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7e1238818b635a057258dc8149dc27d043c7e73895399628a1f8851e5f84116e"
+  },
+  "id": "kcgi7lR7Er0gq53G",
+  "tags": []
+}

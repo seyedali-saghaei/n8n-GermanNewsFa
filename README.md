@@ -1,415 +1,207 @@
-# GermanNewsFa – AI Media & Language Learning Automation Platform
+# GermanNewsFa
 
-GermanNewsFa is a modular AI automation platform built with **n8n**.
-It automates multilingual German news publishing, daily calendar content, and German language-learning posts for Persian-speaking audiences.
+MIT License
+n8n
+OpenAI
+Gemini
+Telegram
+JavaScript
 
-The project combines **AI translation**, **RSS aggregation**, **Telegram publishing**, **Google Sheets-based content management**, and **scheduled automation workflows** into one structured media automation system.
+> AI-Powered German News & Language Learning Automation Platform
+
+> Production-ready AI automation platform for multilingual news publishing, German language learning, and Telegram content automation.
+
+
+## n8n Workflow
+
+![Workflow]
+<p align="center">
+  <img src="images/workflow-overview.png" width="950">
+</p>
+---
+
+## System Overview
+
+<p align="center">
+  <img src="images/system-overview.png" width="950">
+</p>
 
 ---
 
-## Overview
+## Telegram Output
 
-GermanNewsFa is not only a news translation workflow.
-It is a multi-workflow automation platform with three main modules:
-
-1. **AI News Automation**
-2. **Daily Calendar Automation**
-3. **German Language Learning Automation**
-
-The goal is to provide Persian-speaking users with:
-
-* German and international news in Persian
-* Daily cultural/calendar content from Germany
-* Practical German learning material
-* Weekly German dialogs for real-life language practice
+![Telegram Output]
+<p align="center">
+  <img src="images/telegram-news.png" width="45%">
+  <img src="images/daily-calendar.png" width="45%">
+  <img src="images/german-learning-sentences.png" width="45%">
+  <img src="images/german-learning-dialogs.png" width="45%">
+</p>
 
 ---
 
-## Main Features
+## What This Project Demonstrates
 
-### AI News Automation
+This is a production-grade AI automation system I designed and built end-to-end,
+showcasing skills in:
 
-* Collects German news from multiple RSS sources
-* Cleans and normalizes article content
-* Extracts article images where available
-* Filters and processes news items
-* Uses AI for translation and summarization
-* Supports OpenAI and Gemini-based processing
-* Builds Telegram-ready Persian content
-* Handles Telegram caption limits
-* Splits long texts into safe Telegram chunks
-* Supports RTL Persian formatting
-* Adds source links and inline buttons
-
----
-
-### Daily Calendar Automation
-
-* Runs automatically every morning
-* Selects a German landmark or location
-* Downloads an image from Wikimedia
-* Generates a Persian daily greeting
-* Shows Jalali date
-* Shows Gregorian date
-* Shows Berlin time
-* Adds German public holiday information where available
-* Publishes the result to Telegram
+  - **LLM Integration**       — Dynamic switching between OpenAI GPT and Google Gemini
+                                via a single provider flag; structured JSON output parsing
+  - **Prompt Engineering**    — Custom system prompts for consistent, high-quality
+                                Farsi translations with preserved journalistic tone
+  - **Workflow Orchestration**— Multi-branch parallel pipelines in n8n with error
+                                handling, deduplication, and retry logic
+  - **API Integration**       — Telegram Bot API, Wikimedia REST API, 6x RSS feeds,
+                                OpenAI + Gemini APIs — all chained in one workflow
+  - **Data Engineering**      — Stateful deduplication across runs using a database
+                                backend; shuffle-bag algorithm for content rotation
+  - **Scheduling & Reliability** — Three independent cron pipelines running in production,
+                                   each with its own error boundary
 
 ---
 
-### German Learning – Daily Sentence
+## Key Technical Decisions
 
-This workflow publishes one practical German sentence per day.
+### Dual-LLM Architecture
+The workflow abstracts the AI provider behind a single `Set provider` node.
+Switching from OpenAI to Gemini requires changing one value — no other node
+needs to be touched. This was a deliberate design choice for cost flexibility
+and resilience against API outages.
 
-It uses Google Sheets as a simple content database and includes:
+### Stateful Deduplication
+Every published article is tracked in a database. On each hourly run, incoming
+RSS items are filtered against this store before any LLM call is made —
+avoiding redundant API costs and duplicate posts.
 
-* German sentence
-* Persian translation
-* Learning level, for example A1–B1
-* German keyword
-* Persian keyword translation
-* Telegram publishing
-* Automatic `Published = TRUE` update after successful posting
+### Shuffle-Bag for Content Rotation
+Rather than random selection (which allows repeats), the morning image pipeline
+uses a shuffle-bag: all 55+ landmarks are shuffled once, then consumed one by
+one. Only when the bag is empty is a new shuffle triggered. This guarantees
+full coverage before any location repeats.
 
----
+### Bilingual Date Formatting (No External Library)
+The morning post caption includes the Jalali (Persian) calendar date computed
+natively via the JavaScript `Intl.DateTimeFormat` API with `ca-persian` locale —
+no third-party library required, no external call.
 
-### German Learning – Weekly Dialog
-
-This workflow publishes one weekly German dialog.
-
-It includes:
-
-* German dialog text
-* Persian translation
-* Practical phrases
-* Learning level
-* Weekly Telegram post
-* Google Sheets-based publishing status management
+### Modular Workflow Design
+Each automation is implemented as an independent workflow with a single responsibility. This modular approach simplifies maintenance, testing, and future feature expansion.
 
 ---
 
-## Architecture
+## Pipeline Details
 
-```text
-GermanNewsFa Platform
-│
-├── AI News Automation
-│   ├── RSS Sources
-│   ├── Article Cleaning
-│   ├── Image Extraction
-│   ├── AI Translation
-│   ├── AI Summarization
-│   ├── Telegram Payload Builder
-│   └── Telegram Publishing
-│
-├── Daily Calendar Automation
-│   ├── Schedule Trigger
-│   ├── Random German Place Selection
-│   ├── Wikimedia Image Download
-│   ├── Jalali/Gregorian Date Builder
-│   └── Telegram Publishing
-│
-└── German Learning Automation
-    ├── Daily Sentence Workflow
-    ├── Weekly Dialog Workflow
-    ├── Google Sheets Content Database
-    └── Telegram Publishing
-```
+### 1. Hourly News Pipeline
+  - Triggers: every 60 minutes
+  - Sources: Spiegel, FAZ, Süddeutsche Zeitung, Focus, Tagesschau, BBC
+  - Flow: RSS fetch → dedup check → GPT/Gemini translate → caption build → Telegram post
+  - LLM output: structured JSON with `title_fa`, `summary_fa`, `keywords`
 
----
+### 2. Daily Morning Image (06:05 Berlin Time)
+  - Selects a German landmark (55+ locations across 20+ cities)
+  - Downloads image from Wikimedia Commons at 1600px
+  - Builds a Farsi caption with Jalali date, Gregorian date, Berlin time,
+    and any German public holidays for that day
+  - Posts photo + RTL-formatted caption to Telegram
 
-## Project Structure
-
-```text
-n8n-GermanNewsFa/
-│
-├── README.md
-├── CHANGELOG.md
-├── LICENSE
-├── .gitignore
-│
-├── workflows/
-│   ├── GermanNewsFa.json
-│   ├── Gemini-single-call-legacy.json
-│   └── GermanLearning/
-│       ├── DailySentence.json
-│       └── WeeklyDialog.json
-│
-├── docs/
-│   └── screenshots/
-│
-├── assets/
-└── images/
-```
-
----
-
-## Workflows
-
-### 1. `GermanNewsFa.json`
-
-Main production workflow for AI-powered German news processing and Telegram publishing.
-
-Core responsibilities:
-
-* RSS ingestion
-* News preprocessing
-* Translation pipeline
-* Summary generation
-* Telegram formatting
-* Image-aware publishing
-* Long-text chunking
-
----
-
-### 2. `Gemini-single-call-legacy.json`
-
-Legacy workflow kept for reference.
-
-This version was focused on Gemini-based single-call translation and batching logic.
-
-It is useful for showing the evolution from an experimental workflow to a larger automation platform.
-
----
-
-### 3. `GermanLearning/DailySentence.json`
-
-Publishes one daily German learning sentence from Google Sheets to Telegram.
-
-Content fields:
-
-* `ID`
-* `German`
-* `Persian`
-* `KeywordGerman`
-* `KeywordPersian`
-* `Level`
-* `Published`
-
----
-
-### 4. `GermanLearning/WeeklyDialog.json`
-
-Publishes one weekly German dialog from Google Sheets to Telegram.
-
-Content fields:
-
-* `ID`
-* `Title`
-* `GermanDialog`
-* `PersianDialog`
-* `Vocabulary`
-* `Keywords`
-* `Level`
-* `Published`
+### 3. Weekly German Learning Post (Saturday 10:00)
+  - Reads prepared dialog entries from database
+  - Formats and publishes to Telegram
+  - Marks entries as published to prevent duplicates
 
 ---
 
 ## Tech Stack
 
-* n8n
-* JavaScript
-* OpenAI API
-* Google Gemini API
-* Telegram Bot API
-* Google Sheets
-* RSS Feeds
-* HTTP Requests
-* JSON Workflow Exports
-* Git / GitHub
+| Layer            | Technology                              |
+|------------------|-----------------------------------------|
+| Orchestration    | n8n (self-hosted)                       |
+| AI / LLM         | OpenAI GPT-4o, Google Gemini            |
+| Messaging        | Telegram Bot API                        |
+| Image Source     | Wikimedia Commons REST API              |
+| News Sources     | RSS (Spiegel, FAZ, SZ, Focus, ARD, BBC)|
+| Database         | PostgreSQL / SQLite (deduplication)     |
+| Language         | JavaScript (n8n Code nodes)             |
+| Runtime          | Europe/Berlin timezone                  |
 
 ---
 
-## AI & Automation Concepts Used
+## Architecture Diagram
 
-* Workflow automation
-* Prompt-based content transformation
-* Multilingual translation pipeline
-* Persian RTL text handling
-* Telegram message formatting
-* Content chunking
-* Scheduled automation
-* Google Sheets as a lightweight CMS
-* Persistent publishing state
-* Modular workflow design
+<p align="center">
+  <img src="images/architecture-diagram.png" width="950">
+</p>
+
 
 ---
 
-## Configuration
+## Project Structure
 
-Before importing or running the workflows, configure the following services:
-
-### Required
-
-* n8n instance
-* Telegram Bot
-* Telegram Channel or Group ID
-* Google Sheets OAuth credentials
-* OpenAI or Gemini API credentials
-
-### Recommended Environment Variables
-
-Use environment variables or n8n credentials instead of hardcoding secrets.
-
-```text
-TELEGRAM_CHAT_ID=your_chat_id
-TELEGRAM_BOT_TOKEN=your_bot_token
-GOOGLE_SHEET_ID=your_google_sheet_id
-OPENAI_API_KEY=your_openai_api_key
-GEMINI_API_KEY=your_gemini_api_key
-```
+<p align="center">
+  <img src="images/project-structure.png" width="950">
+</p>
 
 ---
 
-## Security Notice
+## Setup Guide
 
-This repository should not contain real credentials.
+### Prerequisites
+  - n8n instance (self-hosted or cloud), version >= 1.0
+  - Telegram Bot Token (via @BotFather)
+  - OpenAI API Key and/or Google Gemini API Key
+  - PostgreSQL or SQLite database for deduplication
 
-Before committing workflow exports, replace sensitive values such as:
+### Steps
 
-```text
-chatId
-webhookId
-credential IDs
-Google Sheet IDs
-Telegram Bot Tokens
-API Keys
-OAuth IDs
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/seyedali_saghaei/GermanNewsFa.git
+   cd GermanNewsFa
+   ```
 
-with placeholders such as:
+2. Import the workflow into n8n:
+   - Open n8n → Workflows → Import from File
+   - Select `workflows/GermanNewsFa.json`
 
-```text
-YOUR_TELEGRAM_CHAT_ID
-YOUR_WEBHOOK_ID
-YOUR_GOOGLE_SHEET_ID
-YOUR_CREDENTIAL_ID
-YOUR_API_KEY
-```
+3. Configure credentials in n8n (Settings → Credentials):
+   - **Telegram API** — paste your Bot Token
+   - **OpenAI API**   — paste your API key
+   - **Gemini API**   — paste your API key (if using Gemini)
+   - **Database**     — configure your connection
 
----
+4. Set your AI provider:
+   - Open the node `Set provider (openai|gemini)`
+   - Set value to `openai` or `gemini`
 
-## Example Output
+5. Set your Telegram channel ID:
+   - Update `chatId` in all Telegram nodes to your channel
 
-### News Post
-
-```text
-📰 German news title in Persian
-
-Persian summary of the article...
-
-🔗 Continue reading
-@German_news_fa
-```
-
-### Daily Calendar Post
-
-```text
-☀️ سلام، صبح بخیر
-
-🏛 تصویر روز
-دروازه براندنبورگ — برلین
-
-📅 تاریخ شمسی | تاریخ میلادی
-⏰ به وقت برلین
-
-@German_news_fa
-```
-
-### German Learning Sentence
-
-```text
-🇩🇪 آلمانی کاربردی برای زندگی در آلمان
-
-📘 جمله روز
-
-🏷 سطح: A1-B1
-
-🇩🇪
-German sentence
-
-🇮🇷
-Persian translation
-
-🔹 #واژه_امروز
-
-German keyword = Persian keyword
-```
-
-### Weekly Dialog
-
-```text
-🎭 دیالوگ هفته
-
-📍 Dialog title
-🏷 سطح: A1-B1
-
-متن آلمانی
-
-German dialog
-
-────────────
-
-ترجمه فارسی
-
-Persian translation
-
-────────────
-
-🔹 عبارت‌های کاربردی
-
-Useful phrases
-```
+6. Activate the workflow and monitor the first runs.
 
 ---
 
-## Roadmap
+## Live Output
 
-* [x] RSS-based German news automation
-* [x] Persian Telegram publishing
-* [x] Daily German calendar post
-* [x] Google Sheets-based German learning content
-* [x] Daily sentence automation
-* [x] Weekly dialog automation
-* [ ] Add X/Twitter publishing
-* [ ] Add Instagram publishing
-* [ ] Add podcast script generation
-* [ ] Add dashboard for article analytics
-* [ ] Add Supabase/PostgreSQL storage
-* [ ] Add Docker deployment
-* [ ] Add automated error monitoring
-* [ ] Add RAG-based archive search
+The workflow is running in production. You can see the output here:
+
+  - Telegram: https://t.me/German_news_fa
+  - Twitter/X: https://x.com/GermanNewsFa
 
 ---
 
-## Design Decisions
+## What I Would Add Next
 
-### Why n8n?
-
-n8n was selected because it allows fast integration between APIs, RSS feeds, LLM providers, Google Sheets, and Telegram while still supporting custom JavaScript logic.
-
-### Why Google Sheets?
-
-Google Sheets works as a simple lightweight CMS for educational content.
-It allows easy editing of sentences and dialogs without changing the workflow itself.
-
-### Why Telegram?
-
-Telegram is well suited for Persian-speaking audiences and supports rich media posts, captions, inline links, and automated channel publishing.
-
-### Why Modular Workflows?
-
-The project is split into independent workflows so that news automation, calendar posts, and language-learning posts can be maintained separately.
-
----
-
-## Author
-
-**Seyedali Saghaei**
-Development Engineer | Software Engineering | AI Automation | n8n | LLM Workflows
+  - **Vector deduplication** — embed article content and skip semantically similar articles, not just exact-URL duplicates
+  - **Analytics dashboard** — track post engagement and auto-adjust posting times
+  - **Fallback chain** — if OpenAI fails, automatically retry with Gemini
+  - **Multi-language support** — extend beyond Farsi using the same pipeline
 
 ---
 
 ## License
 
-This project is licensed under the terms defined in the `LICENSE` file.
+MIT — free to use, adapt, and redistribute with attribution.
+
+---
+
+*Built by Seyedali Saghaei · AI Engineering & Automation*

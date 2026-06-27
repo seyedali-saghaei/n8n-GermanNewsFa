@@ -1,11 +1,10 @@
 # GermanNewsFa
-
-MIT License
-n8n
-OpenAI
-Gemini
-Telegram
-JavaScript
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![n8n](https://img.shields.io/badge/n8n-Workflow-orange)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o-412991)
+![Gemini](https://img.shields.io/badge/Google-Gemini-4285F4)
+![Telegram](https://img.shields.io/badge/Telegram-Bot_API-26A5E4)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?logo=javascript&logoColor=black)
 
 > AI-Powered German News & Language Learning Automation Platform
 
@@ -14,28 +13,27 @@ JavaScript
 
 ## n8n Workflow
 
-![Workflow]
 <p align="center">
-  <img src="images/workflow-overview.png" width="950">
+  <img src="images/workflow-overview.png" width="400">
 </p>
+
 ---
 
 ## System Overview
 
 <p align="center">
-  <img src="images/system-overview.png" width="950">
+  <img src="images/system-overview.png" width="250" height="250">
 </p>
 
 ---
 
 ## Telegram Output
 
-![Telegram Output]
 <p align="center">
-  <img src="images/telegram-news.png" width="45%">
-  <img src="images/daily-calendar.png" width="45%">
-  <img src="images/german-learning-sentences.png" width="45%">
-  <img src="images/german-learning-dialogs.png" width="45%">
+  <img src="images/telegram-news.png" width="25%">
+  <img src="images/daily-calendar.png" width="25%">
+  <img src="images/german-learning-sentences.png" width="25%">
+  <img src="images/german-learning-dialogs.png" width="25%">
 </p>
 
 ---
@@ -57,7 +55,6 @@ showcasing skills in:
                                 backend; shuffle-bag algorithm for content rotation
   - **Scheduling & Reliability** — Three independent cron pipelines running in production,
                                    each with its own error boundary
-
 ---
 
 ## Key Technical Decisions
@@ -115,30 +112,28 @@ Each automation is implemented as an independent workflow with a single responsi
 
 | Layer            | Technology                              |
 |------------------|-----------------------------------------|
-| Orchestration    | n8n (self-hosted)                       |
 | AI / LLM         | OpenAI GPT-4o, Google Gemini            |
+| Workflow         | n8n                                     |
 | Messaging        | Telegram Bot API                        |
 | Image Source     | Wikimedia Commons REST API              |
-| News Sources     | RSS (Spiegel, FAZ, SZ, Focus, ARD, BBC)|
-| Database         | PostgreSQL / SQLite (deduplication)     |
-| Language         | JavaScript (n8n Code nodes)             |
-| Runtime          | Europe/Berlin timezone                  |
+| News Sources     | RSS (Spiegel, FAZ, SZ, Focus, ARD, BBC) |
+| Database         | PostgreSQL / SQLite                     |
+| Language         | JavaScript                              |
 
 ---
 
 ## Architecture Diagram
 
 <p align="center">
-  <img src="images/architecture-diagram.png" width="950">
+  <img src="images/architecture-diagram.png" width="250" height="250">
 </p>
-
 
 ---
 
 ## Project Structure
 
 <p align="center">
-  <img src="images/project-structure.png" width="950">
+  <img src="images/project-structure.png" width="500" height="500">
 </p>
 
 ---

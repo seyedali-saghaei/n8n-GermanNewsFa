@@ -55,3 +55,34 @@ The project now combines a hosted news workflow with a local AI media pipeline. 
 - Record execution duration per stage to identify the main bottleneck.
 - Move deployment-specific paths and service URLs into environment variables.
 - Add an automated JSON validation and secret scan for exported workflows.
+
+## Rendering scripts
+
+The production helpers are stored in `scripts/`:
+
+- `video_engine.py` renders one vertical scene or finalizes a complete video from scenes, intro, and outro.
+- `tts.py` generates Persian narration with Edge TTS and supports plain UTF-8 or Base64 input.
+
+Install the Python dependency:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+The current Windows installation paths remain the defaults. They can be overridden without changing the source code:
+
+| Environment variable | Default |
+| --- | --- |
+| `GERMANNEWSFA_FFMPEG_BIN` | `C:\ffmpeg\bin\ffmpeg.exe` |
+| `GERMANNEWSFA_FFPROBE_BIN` | `C:\ffmpeg\bin\ffprobe.exe` |
+| `GERMANNEWSFA_FONTS_DIR` | `C:\Windows\Fonts` |
+
+Example:
+
+```powershell
+$env:GERMANNEWSFA_FFMPEG_BIN = "C:\ffmpeg\bin\ffmpeg.exe"
+$env:GERMANNEWSFA_FFPROBE_BIN = "C:\ffmpeg\bin\ffprobe.exe"
+$env:GERMANNEWSFA_FONTS_DIR = "C:\Windows\Fonts"
+```
+
+The repository intentionally excludes generated audio, video, subtitle, temporary, output, and execution files.

@@ -3,3 +3,22 @@
 node_modules/
 .n8n/
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Generated media and runtime data
+temp/
+output/
+execution_*/
+*.mp3
+*.wav
+*.mp4
+*.ass
+
+# Local AI models and ComfyUI output
+models/
+ComfyUI/output/

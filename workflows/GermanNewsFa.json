@@ -4,7 +4,7 @@
     {
       "parameters": {
         "operation": "sendPhoto",
-        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "chatId": "-1002971367902",
         "binaryData": true,
         "additionalFields": {
           "caption": "={{ $json.caption }}"
@@ -16,15 +16,9 @@
       "typeVersion": 1.2,
       "position": [
         -80,
-        3216
+        3696
       ],
-      "webhookId": "YOUR_webhook_ID",
-      "credentials": {
-        "telegramApi": {
-          "id": "YOUR_TELEGRAM_API_ID",
-          "name": "Telegram account"
-        }
-      }
+      "webhookId": "ca0c336c-1192-41c1-b5cc-bc8024dec3c7"
     },
     {
       "parameters": {
@@ -36,7 +30,7 @@
       "typeVersion": 2,
       "position": [
         -304,
-        3216
+        3696
       ]
     },
     {
@@ -57,7 +51,7 @@
       "typeVersion": 2,
       "position": [
         -528,
-        3216
+        3696
       ]
     },
     {
@@ -90,7 +84,7 @@
       "typeVersion": 4.3,
       "position": [
         -752,
-        3136
+        3632
       ],
       "continueOnFail": true
     },
@@ -104,7 +98,7 @@
       "typeVersion": 3,
       "position": [
         -976,
-        3216
+        3696
       ]
     },
     {
@@ -117,7 +111,7 @@
       "typeVersion": 2,
       "position": [
         -1200,
-        3216
+        3696
       ]
     },
     {
@@ -137,7 +131,7 @@
       "typeVersion": 1.3,
       "position": [
         -1424,
-        3216
+        3696
       ]
     },
     {
@@ -158,7 +152,7 @@
       "typeVersion": 2,
       "position": [
         1264,
-        1520
+        1712
       ]
     },
     {
@@ -168,8 +162,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4624,
-        1520
+        4832,
+        1712
       ],
       "id": "a139236f-914c-443b-81ba-3d6c7f83fef1",
       "name": "Build caption"
@@ -181,8 +175,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4848,
-        1520
+        5056,
+        1712
       ],
       "id": "1c130e32-404f-4d6f-be23-dd9f52dd1beb",
       "name": "Build Telegram payload1"
@@ -216,8 +210,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        5072,
-        1360
+        5280,
+        1808
       ],
       "id": "1ee50abf-4003-4d6c-97c0-89bb998fda08",
       "name": "IF has image2"
@@ -233,7 +227,7 @@
       "typeVersion": 1,
       "position": [
         -1200,
-        1136
+        1328
       ]
     },
     {
@@ -247,15 +241,15 @@
       "typeVersion": 1,
       "position": [
         -1200,
-        1904
+        2096
       ]
     },
     {
       "parameters": {
         "operation": "sendPhoto",
-        "chatId": "YOUR_TELEGRAM_CHAT_ID",
-        "file": "={{ $json.telegram.photo }}\n",
-        "replyMarkup": "=={{ $json.telegram.replyMarkupJSON }}\n",
+        "chatId": "-1002971367902",
+        "file": "={{ $json.telegram.photo }}",
+        "replyMarkup": "={{ $json.telegram.replyMarkupJSON }}",
         "forceReply": {},
         "replyKeyboardOptions": {},
         "replyKeyboardRemove": {},
@@ -269,17 +263,11 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        5296,
-        1360
+        5504,
+        1808
       ],
-      "webhookId": "YOUR_webhook_D",
-      "retryOnFail": true,
-      "credentials": {
-        "telegramApi": {
-          "id": "YOUR_TELEGRAM_API_ID",
-          "name": "Telegram account"
-        }
-      }
+      "webhookId": "b7fade46-9af9-4a64-b4d9-6533cb0aecb6",
+      "retryOnFail": true
     },
     {
       "parameters": {},
@@ -287,7 +275,7 @@
       "typeVersion": 3.2,
       "position": [
         -976,
-        1232
+        1424
       ],
       "id": "48605a19-3373-4f49-bd06-826005bb0eaa",
       "name": "Merge (Spiegel + FAZ)"
@@ -298,7 +286,7 @@
       "typeVersion": 3.2,
       "position": [
         -976,
-        1616
+        1808
       ],
       "id": "3bbfa1c7-108c-4ae0-ac40-74a0b940c46a",
       "name": "Merge(SZ + Tagesschau)"
@@ -313,8 +301,8 @@
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
       "position": [
-        -1216,
-        1776
+        -1200,
+        1904
       ]
     },
     {
@@ -325,7 +313,7 @@
       "typeVersion": 2,
       "position": [
         -528,
-        1520
+        1712
       ]
     },
     {
@@ -334,7 +322,7 @@
       "typeVersion": 3.2,
       "position": [
         -752,
-        1712
+        1904
       ],
       "id": "16f21bde-6581-421f-8f34-1982b0646215",
       "name": "Merge((SZ+TG)+(Fo+Welt))"
@@ -347,7 +335,7 @@
       "typeVersion": 2,
       "position": [
         -304,
-        1520
+        1712
       ],
       "id": "fc64f33e-ce6c-49f9-8aef-5b5e83b2a79a",
       "name": "Time window (last 15 min)"
@@ -360,7 +348,7 @@
       "typeVersion": 2,
       "position": [
         -80,
-        1520
+        1712
       ],
       "id": "cfc7d02d-0e8c-41f2-a927-7ba313ba66ca",
       "name": "Code (Static Data)"
@@ -375,7 +363,7 @@
       "typeVersion": 2,
       "position": [
         144,
-        1520
+        1712
       ]
     },
     {
@@ -386,7 +374,7 @@
       "typeVersion": 2,
       "position": [
         368,
-        1520
+        1712
       ],
       "id": "c3a867e7-77d7-40fd-959a-edf6227c4429",
       "name": "Code in JavaScript"
@@ -397,7 +385,7 @@
       "typeVersion": 3.2,
       "position": [
         -976,
-        1904
+        2096
       ],
       "id": "3bb836e5-f8e1-4b04-8ea7-d6607fd01d6e",
       "name": "Merge1"
@@ -413,7 +401,7 @@
       "typeVersion": 1,
       "position": [
         -1200,
-        1328
+        1520
       ]
     },
     {
@@ -424,7 +412,7 @@
       "typeVersion": 2,
       "position": [
         4176,
-        1520
+        1712
       ],
       "id": "d8f5d541-4146-4714-bd0c-754cf93d1317",
       "name": "Ensure Parens (Glossary)"
@@ -438,7 +426,7 @@
       "typeVersion": 1.2,
       "position": [
         -1200,
-        2096
+        2288
       ],
       "id": "2ea9d6c0-007f-4c30-aca1-6b2f9900f26f",
       "name": "RSS Read(BBC)"
@@ -449,7 +437,7 @@
       "typeVersion": 3.2,
       "position": [
         -976,
-        2096
+        2288
       ],
       "id": "c62c826f-4080-43bf-a948-b3780dde1c19",
       "name": "Merge (FA style feeds)"
@@ -462,7 +450,7 @@
       "typeVersion": 2,
       "position": [
         -752,
-        2096
+        2288
       ],
       "id": "f4f5bef2-ae10-4510-b31c-ffa573035294",
       "name": "Code (staticData.style_bank)"
@@ -475,7 +463,7 @@
       "typeVersion": 2,
       "position": [
         3952,
-        1520
+        1712
       ],
       "id": "cb613187-b9a3-4d95-8335-bed2761e2785",
       "name": "Code (Post-process FA)"
@@ -486,7 +474,7 @@
       "typeVersion": 3.2,
       "position": [
         3504,
-        1520
+        1712
       ],
       "id": "5f954589-7c63-4a05-b20c-312ec6a464d6",
       "name": "Merge4"
@@ -501,7 +489,7 @@
       "typeVersion": 3.2,
       "position": [
         3280,
-        1424
+        1616
       ],
       "id": "b2228979-147f-4fd0-af5e-b88b2e7e9f58",
       "name": "Merge"
@@ -514,7 +502,7 @@
       "typeVersion": 2,
       "position": [
         3728,
-        1520
+        1712
       ],
       "id": "fed97a01-5530-48d3-8926-280a29a7b68f",
       "name": "Pick title_fa (OpenAI)"
@@ -547,16 +535,10 @@
       "typeVersion": 4,
       "position": [
         3056,
-        1504
+        1696
       ],
       "id": "63cf7546-9d33-4cee-b69d-4285cc4d3e15",
-      "name": "OpenAI Translate (HTTP)",
-      "credentials": {
-        "openAiApi": {
-          "id": "YOUR_OPENAI_API_ID",
-          "name": "OpenAi account"
-        }
-      }
+      "name": "OpenAI Translate (HTTP)"
     },
     {
       "parameters": {
@@ -566,7 +548,7 @@
       "typeVersion": 2,
       "position": [
         2832,
-        1424
+        1616
       ],
       "id": "49e0ba62-c7a4-456f-8228-aea43c68fa3b",
       "name": "Build OpenAI body"
@@ -602,7 +584,7 @@
       "typeVersion": 2,
       "position": [
         1488,
-        1520
+        1712
       ]
     },
     {
@@ -613,7 +595,7 @@
       "typeVersion": 1,
       "position": [
         3280,
-        1696
+        1888
       ]
     },
     {
@@ -626,7 +608,7 @@
       "typeVersion": 2,
       "position": [
         3056,
-        1696
+        1888
       ]
     },
     {
@@ -655,14 +637,8 @@
       "typeVersion": 4,
       "position": [
         2832,
-        1696
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "YOUR_GEMINI_HEADER_AUTH_ID",
-          "name": "Header Auth account"
-        }
-      }
+        1888
+      ]
     },
     {
       "parameters": {
@@ -674,7 +650,7 @@
       "typeVersion": 2,
       "position": [
         2608,
-        1696
+        1888
       ]
     },
     {
@@ -687,7 +663,7 @@
       "typeVersion": 2,
       "position": [
         2384,
-        1696
+        1888
       ]
     },
     {
@@ -716,14 +692,8 @@
       "typeVersion": 4,
       "position": [
         2160,
-        1696
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "YOUR_GEMINI_HEADER_AUTH_ID",
-          "name": "Header Auth account"
-        }
-      }
+        1888
+      ]
     },
     {
       "parameters": {
@@ -735,7 +705,7 @@
       "typeVersion": 2,
       "position": [
         1936,
-        1696
+        1888
       ]
     },
     {
@@ -746,7 +716,7 @@
       "typeVersion": 1,
       "position": [
         1712,
-        1696
+        1888
       ]
     },
     {
@@ -777,8 +747,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        5296,
-        1616
+        -1200,
+        2592
       ],
       "id": "085b1eaf-c48c-492d-9475-3c6e585028d7",
       "name": "IF Twitter OK"
@@ -790,8 +760,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5072,
-        1616
+        -1424,
+        2592
       ],
       "id": "00fb879d-0a31-4749-aa80-089c394a5e0e",
       "name": "Code - Twitter Gate1"
@@ -804,17 +774,11 @@
       "type": "n8n-nodes-base.twitter",
       "typeVersion": 2,
       "position": [
-        5744,
-        1552
+        -752,
+        2512
       ],
       "id": "d9314e90-78b3-422d-b102-56cdd8ada992",
-      "name": "Create Tweet1",
-      "credentials": {
-        "twitterOAuth2Api": {
-          "id": "YOUR_TWITTER_OAUTH_API",
-          "name": "X account 2"
-        }
-      }
+      "name": "Create Tweet1"
     },
     {
       "parameters": {
@@ -823,8 +787,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5968,
-        1552
+        -528,
+        2512
       ],
       "id": "dda017d0-ce11-418e-9727-84a2cbe8d9bb",
       "name": "Code-Twitter Static Data1"
@@ -839,8 +803,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        5520,
-        1616
+        -976,
+        2592
       ]
     },
     {
@@ -853,10 +817,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        6192,
-        1616
+        -304,
+        2592
       ],
-      "webhookId": "YOUR_WAIT_WEBHOOK_ID"
+      "webhookId": "8f54b5a3-ccac-4d1d-97df-998901233f3b"
     },
     {
       "parameters": {
@@ -880,15 +844,15 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        5520,
-        1360
+        5728,
+        1808
       ],
       "id": "94c7ab42-9733-458a-afda-7afd5410e715",
       "name": "Explode textChunks"
     },
     {
       "parameters": {
-        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "chatId": "-1002971367902",
         "text": "={{ $json.telegram.textChunks }}",
         "additionalFields": {
           "parse_mode": "HTML"
@@ -897,18 +861,12 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        5744,
-        1360
+        5952,
+        1808
       ],
       "id": "700ec2af-55af-4e31-8aa2-3de3443c75e3",
       "name": "Send a text message",
-      "webhookId": "YOUR_WEBHOOK_ID",
-      "credentials": {
-        "telegramApi": {
-          "id": "YOUR_TELEGRAM_API_ID",
-          "name": "Telegram account"
-        }
-      }
+      "webhookId": "ccabbd7c-e0fd-497a-bc93-b9798a46046e"
     },
     {
       "parameters": {
@@ -940,7 +898,7 @@
       "typeVersion": 4.3,
       "position": [
         592,
-        1456
+        1648
       ],
       "id": "19a549ac-a438-4399-9038-12c072d30d89",
       "name": "Fetch Full Article",
@@ -955,7 +913,7 @@
       "typeVersion": 2,
       "position": [
         1040,
-        1520
+        1712
       ],
       "id": "ba6ee70c-8b80-4d96-9126-14b81c6336ff",
       "name": "Extract Main Article"
@@ -970,7 +928,7 @@
       "typeVersion": 3.2,
       "position": [
         816,
-        1520
+        1712
       ],
       "id": "151c4a28-bf72-4c3a-8ca5-99a37f6b5c8f",
       "name": "Merge2"
@@ -983,7 +941,7 @@
       "typeVersion": 2,
       "position": [
         4400,
-        1520
+        1712
       ],
       "id": "05905980-3c06-4416-8d4e-383770f9703d",
       "name": "Filter by Importance"
@@ -1010,14 +968,8 @@
       "typeVersion": 4.6,
       "position": [
         -1424,
-        2912
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEETS_OAUTH_API_ID",
-          "name": "Google Sheets account"
-        }
-      }
+        3408
+      ]
     },
     {
       "parameters": {
@@ -1050,7 +1002,7 @@
       "typeVersion": 2.2,
       "position": [
         -1200,
-        2912
+        3408
       ]
     },
     {
@@ -1065,7 +1017,7 @@
       "typeVersion": 3,
       "position": [
         -976,
-        2912
+        3408
       ]
     },
     {
@@ -1078,7 +1030,7 @@
       "typeVersion": 2,
       "position": [
         -752,
-        2848
+        3328
       ]
     },
     {
@@ -1091,7 +1043,7 @@
       "typeVersion": 2,
       "position": [
         -304,
-        2848
+        3328
       ]
     },
     {
@@ -1202,14 +1154,8 @@
       "typeVersion": 4.6,
       "position": [
         -80,
-        2848
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_COOGLE_SHEETS_OATH_API",
-          "name": "Google Sheets account"
-        }
-      }
+        3328
+      ]
     },
     {
       "parameters": {},
@@ -1219,7 +1165,7 @@
       "typeVersion": 1.1,
       "position": [
         144,
-        2912
+        3408
       ],
       "webhookId": "wait-generated-id"
     },
@@ -1240,14 +1186,8 @@
       "typeVersion": 4.2,
       "position": [
         -528,
-        2848
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "YOUR_OPEN_AI_API_ID",
-          "name": "OpenAi account"
-        }
-      }
+        3328
+      ]
     },
     {
       "parameters": {
@@ -1309,7 +1249,7 @@
       "typeVersion": 2.2,
       "position": [
         -976,
-        2320
+        2816
       ]
     },
     {
@@ -1320,7 +1260,7 @@
       "typeVersion": 1,
       "position": [
         -752,
-        2320
+        2816
       ]
     },
     {
@@ -1333,12 +1273,12 @@
       "typeVersion": 2,
       "position": [
         -528,
-        2320
+        2816
       ]
     },
     {
       "parameters": {
-        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "chatId": "-1002971367902",
         "text": "={{$json.telegramText}}",
         "additionalFields": {
           "appendAttribution": false,
@@ -1352,15 +1292,9 @@
       "typeVersion": 1.2,
       "position": [
         -304,
-        2320
+        2816
       ],
-      "webhookId": "YOUR_WEBHOOK_ID",
-      "credentials": {
-        "telegramApi": {
-          "id": "YOUR_TELEGRAM_API_ID",
-          "name": "Telegram account"
-        }
-      }
+      "webhookId": "05d05ce6-90df-4447-83f3-adc06038a996"
     },
     {
       "parameters": {
@@ -1468,14 +1402,8 @@
       "typeVersion": 4.6,
       "position": [
         144,
-        2320
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
-          "name": "Google Sheets account"
-        }
-      }
+        2816
+      ]
     },
     {
       "parameters": {
@@ -1494,7 +1422,7 @@
       "typeVersion": 1.2,
       "position": [
         -1424,
-        2320
+        2816
       ]
     },
     {
@@ -1519,14 +1447,8 @@
       "typeVersion": 4.6,
       "position": [
         -1200,
-        2320
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEET_OAUTH_API_ID",
-          "name": "Google Sheets account"
-        }
-      }
+        2816
+      ]
     },
     {
       "parameters": {
@@ -1550,14 +1472,8 @@
       "typeVersion": 4.6,
       "position": [
         -1424,
-        2624
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEET_OAUTH_API_ID",
-          "name": "Google Sheets account"
-        }
-      }
+        3104
+      ]
     },
     {
       "parameters": {
@@ -1590,7 +1506,7 @@
       "typeVersion": 2.2,
       "position": [
         -1200,
-        2624
+        3104
       ]
     },
     {
@@ -1610,14 +1526,8 @@
       "typeVersion": 4.2,
       "position": [
         -528,
-        2544
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "YOUR_OPENAI_API_ID",
-          "name": "OpenAi account"
-        }
-      }
+        3040
+      ]
     },
     {
       "parameters": {
@@ -1735,14 +1645,8 @@
       "typeVersion": 4.6,
       "position": [
         -80,
-        2544
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEET_OAUTH_API_ID",
-          "name": "Google Sheets account"
-        }
-      }
+        3040
+      ]
     },
     {
       "parameters": {
@@ -1756,7 +1660,7 @@
       "typeVersion": 3,
       "position": [
         -976,
-        2624
+        3104
       ]
     },
     {
@@ -1769,7 +1673,7 @@
       "typeVersion": 2,
       "position": [
         -752,
-        2544
+        3040
       ]
     },
     {
@@ -1782,7 +1686,7 @@
       "typeVersion": 2,
       "position": [
         -304,
-        2544
+        3040
       ]
     },
     {
@@ -1795,7 +1699,7 @@
       "typeVersion": 1.1,
       "position": [
         144,
-        2624
+        3104
       ],
       "webhookId": "wait-dialog-generated-id"
     },
@@ -1816,7 +1720,7 @@
       "typeVersion": 1.2,
       "position": [
         -1424,
-        3440
+        4336
       ]
     },
     {
@@ -1869,7 +1773,7 @@
       "typeVersion": 2.2,
       "position": [
         -976,
-        3440
+        4336
       ]
     },
     {
@@ -1880,7 +1784,7 @@
       "typeVersion": 1,
       "position": [
         -752,
-        3440
+        4336
       ]
     },
     {
@@ -1893,12 +1797,12 @@
       "typeVersion": 2,
       "position": [
         -528,
-        3440
+        4336
       ]
     },
     {
       "parameters": {
-        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "chatId": "-1002971367902",
         "text": "={{$json.telegramText}}",
         "additionalFields": {
           "appendAttribution": false
@@ -1910,15 +1814,9 @@
       "typeVersion": 1.2,
       "position": [
         -304,
-        3440
+        4336
       ],
-      "webhookId": "YOUR_WEBHOOK_ID",
-      "credentials": {
-        "telegramApi": {
-          "id": "YOUR_TELEGRAM_API_ID",
-          "name": "Telegram account Test"
-        }
-      }
+      "webhookId": "a74a3bff-2a48-4f51-b368-69f622a580b2"
     },
     {
       "parameters": {
@@ -2036,14 +1934,8 @@
       "typeVersion": 4.6,
       "position": [
         -80,
-        3440
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
-          "name": "Google Sheets account"
-        }
-      }
+        4336
+      ]
     },
     {
       "parameters": {
@@ -2067,14 +1959,8 @@
       "typeVersion": 4.6,
       "position": [
         -1200,
-        3440
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEET_OAUTH_API_ID",
-          "name": "Google Sheets account"
-        }
-      }
+        4336
+      ]
     },
     {
       "parameters": {
@@ -2084,7 +1970,7 @@
       "typeVersion": 2,
       "position": [
         -80,
-        2320
+        2816
       ],
       "id": "a150e47b-0489-48e8-83a6-351d81501998",
       "name": "Restore Original Sentence Data"
@@ -2106,8 +1992,444 @@
       "typeVersion": 1,
       "position": [
         -1424,
-        1616
+        1808
       ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/ich_iel/top/.rss?t=day",
+        "options": {
+          "ignoreSSL": false
+        }
+      },
+      "id": "c7a3e633-074e-41eb-bab7-2c97325a049f",
+      "name": "Read Reddit RSS - ich_iel",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        4016
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction decodeHtml(str = '') {\n  return String(str)\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&nbsp;/g, ' ')\n    .trim();\n}\n\nfunction extractImage(html = '') {\n  const s = String(html || '');\n  const img = s.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);\n  if (img?.[1]) return decodeHtml(img[1]);\n  const url = s.match(/https?:\\/\\/[^\\s\"'<>]+\\.(?:jpg|jpeg|png|webp|gif)/i);\n  return url?.[0] || '';\n}\n\nreturn $input.all()\n  .map((item) => {\n    const j = item.json;\n    const title = decodeHtml(j.title || '');\n    const link = j.link || j.guid || '';\n    const content = j.content || j.contentSnippet || j.description || '';\n    const imageUrl = extractImage(content);\n    const id = link || title;\n    return {\n      json: {\n        id,\n        source: 'Reddit',\n        subreddit: 'r/ich_iel',\n        authorName: j.creator || j.author || 'Reddit user',\n        username: j.creator || j.author || '',\n        originalText: title,\n        url: link,\n        imageUrl,\n        publishedAt: j.isoDate || j.pubDate || '',\n      }\n    };\n  })\n  .filter(item => item.json.originalText && item.json.url);\n"
+      },
+      "id": "896a3204-da10-4b5a-bfbc-b91b9bc786b2",
+      "name": "Normalize Reddit Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        4016
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\nlet content =\n  input?.choices?.[0]?.message?.content ||\n  input?.message?.content ||\n  input?.content ||\n  input?.text ||\n  JSON.stringify(input);\n\ncontent = String(content)\n  .replace(/```json/g, '')\n  .replace(/```/g, '')\n  .trim();\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(content);\n} catch (error) {\n  throw new Error('ChatGPT did not return valid JSON. Raw output: ' + content);\n}\n\nconst posts = Array.isArray(parsed)\n  ? parsed\n  : parsed.posts || parsed.items || parsed.selectedPosts || [];\n\nif (!Array.isArray(posts)) {\n  throw new Error('ChatGPT JSON must be an array or contain posts/items array. Raw: ' + JSON.stringify(parsed));\n}\n\nif (!posts.length) {\n  return [{\n    json: {\n      originalText: \"Kein geeigneter Reddit-Post gefunden.\",\n      persianTranslation: \"فعلاً پست مناسبی پیدا نشد.\",\n      authorName: \"Reddit\",\n      username: \"reddit\",\n      source: \"r/ich_iel\",\n      url: \"https://www.reddit.com/r/ich_iel/top/?t=day\",\n      photoUrl: \"\"\n    }\n  }];\n}\n\nreturn posts.map(post => ({\n  json: post\n}));\n\n"
+      },
+      "id": "6cea2eef-eda7-424a-b72a-e95c85daf890",
+      "name": "Parse ChatGPT JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        4016
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction escapeHtml(s = '') {\n  return String(s)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nconst authorLine = $json.username\n  ? `${$json.authorName} (${String($json.username).startsWith('u/') ? $json.username : $json.username})`\n  : $json.authorName;\n\nconst text = `😂 <b>از فضای مجازی آلمان</b>\\n\\n🇩🇪 <b>متن اصلی:</b>\\n${escapeHtml($json.originalText)}\\n\\n🇮🇷 <b>ترجمه فارسی:</b>\\n${escapeHtml($json.persianTranslation)}${$json.whyFunnyFa ? `\\n\\n🧠 ${escapeHtml($json.whyFunnyFa)}` : ''}\\n\\n✍️ <b>نویسنده:</b>\\n${escapeHtml(authorLine)}\\n\\n🔗 <a href=\"${escapeHtml($json.url)}\">لینک پست اصلی</a>`;\n\nreturn [{ json: { ...$json, telegramText: text } }];\n"
+      },
+      "id": "8d862f14-7e01-406e-9f84-7092aea603ae",
+      "name": "Build Telegram Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        4016
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.hasImage}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "ca11167b-277f-40b9-888d-75f8e2f9a1eb",
+      "name": "Has Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        144,
+        4016
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "-1004481078210",
+        "file": "={{$json.imageUrl}}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "c1d31699-d8d3-4fe5-bb8d-4f010a4b58a5",
+      "name": "Send Photo to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        3920
+      ],
+      "webhookId": "23c08de8-b66a-4d39-bbe2-e2198c68bfa8"
+    },
+    {
+      "parameters": {
+        "chatId": "-1004481078210",
+        "text": "={{$json.telegramText}}",
+        "additionalFields": {
+          "disable_web_page_preview": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "60fbe232-6088-4c6c-9e04-ab1a662a7d2f",
+      "name": "Send Text to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        4112
+      ],
+      "webhookId": "7830e46e-b84c-415c-b31c-5a819df5d2b0"
+    },
+    {
+      "parameters": {},
+      "id": "1618a362-54a2-49a5-901e-b605655ae12a",
+      "name": "Manual Trigger Reddit",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        4016
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=1FJPHzQIvijBSsm8dMyx-K2XVtzWaKDpAeedRK4G2bpQ",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Tabellenblatt1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title_fa": "={{ $json.title_fa }}",
+            "short_summary_fa": "={{ $json.short_summary_fa }}",
+            "source_name": "={{ $json.sourceFeed || $json.sourceHost }}",
+            "source_host": "={{ $json.sourceHost }}",
+            "importance": "={{ $json.importance }}",
+            "category": "={{ $json.category }}",
+            "hashtag_fa": "={{ $json.hashtag_fa }}",
+            "story_candidate": "={{ $json.telegram.hasRealImage && Number($json.importance) >= 3 }}",
+            "story_published": "=FALSE",
+            "photo": "={{ $json.telegram.photo }}",
+            "telegram_caption": "={{ $json.telegram.caption }}",
+            "telegram_text_chunks": "={{ ($json.telegram?.textChunks || []).join('\\n---CHUNK---\\n') }}",
+            "link": "={{ $json.link }}",
+            "has_image": "={{ $json.telegram.hasRealImage }}",
+            "published_at": "={{ $now.setZone('Europe/Berlin').toISO() }}",
+            "dedup_key": "={{ $json.dedup_key || $json.link }}",
+            "source_type": "={{ $json.sourceType || $json.source_type || 'rss_news' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "published_at",
+              "displayName": "published_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dedup_key",
+              "displayName": "dedup_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_type",
+              "displayName": "source_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title_fa",
+              "displayName": "title_fa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "photo",
+              "displayName": "photo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_image",
+              "displayName": "has_image",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_caption",
+              "displayName": "telegram_caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_text_chunks",
+              "displayName": "telegram_text_chunks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "short_summary_fa",
+              "displayName": "short_summary_fa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_name",
+              "displayName": "source_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_host",
+              "displayName": "source_host",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "importance",
+              "displayName": "importance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "hashtag_fa",
+              "displayName": "hashtag_fa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "story_candidate",
+              "displayName": "story_candidate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "story_published",
+              "displayName": "story_published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "story_published_at",
+              "displayName": "story_published_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        5280,
+        1616
+      ],
+      "id": "00343042-b3bf-4f46-a862-30755f099c6d",
+      "name": "Append row in sheet"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst candidates = $input.all()\n  .slice(0, 25)\n  .map((item, index) => ({\n    index,\n    id: item.json.id,\n    source: item.json.source,\n    subreddit: item.json.subreddit,\n    authorName: item.json.authorName,\n    username: item.json.username,\n    originalText: item.json.originalText,\n    url: item.json.url,\n    imageUrl: item.json.imageUrl || '',\n    publishedAt: item.json.publishedAt || '',\n  }));\n\nconst system = `You are an editorial AI curator for a Persian-language Telegram channel about Germany. Select funny German social-media posts for Persian-speaking readers. Be strict: publish only posts that are funny, meme-like, culturally interesting, understandable, and safe.`;\n\nconst user = `Select maximum 5 posts from this JSON array. Reject hate, racism, sexual content, boring posts, pure news, ads, low-context jokes, and duplicates. Translate into fluent Persian. Do NOT include like/repost counts. Return JSON only, no markdown.\n\nOutput schema:\n[\n  {\n    \"source\": \"Reddit\",\n    \"subreddit\": \"r/ich_iel\",\n    \"authorName\": \"...\",\n    \"username\": \"...\",\n    \"originalText\": \"German original text\",\n    \"persianTranslation\": \"Persian translation\",\n    \"whyFunnyFa\": \"one short Persian sentence, optional but useful\",\n    \"url\": \"...\",\n    \"imageUrl\": \"...\"\n  }\n]\n\nCandidates:\n${JSON.stringify(candidates, null, 2)}`;\n\nreturn [{\n  json: {\n    openaiBody: {\n      model: 'gpt-4o-mini',\n      temperature: 0.4,\n      response_format: { type: 'json_object' },\n      messages: [\n        { role: 'system', content: system },\n        { role: 'user', content: user }\n      ]\n    }\n  }\n}];\n"
+      },
+      "id": "123ac677-b5f4-4f1c-ae32-3bb5ed560dda",
+      "name": "Prepare AI Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        4016
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer PASTE_OPENAI_API_KEY_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.openaiBody) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "afaf1832-3275-4b09-9ef9-41df947d7a3e",
+      "name": "LLM Translation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -528,
+        4016
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f1a92109-14da-407f-870a-03d0bf4fe7cc",
+              "leftValue": "={{ Number($json.importance) }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4544,
+        1920
+      ],
+      "id": "6ecbbdce-d9ce-40c3-a0e5-6a26cb63e362",
+      "name": "IF Video Candidate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GERMAN_NEWS_VIDEO_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    title_fa: $json.title_fa,\n    short_summary_fa: $json.short_summary_fa,\n    teaser_fa: $json.teaser_fa,\n    importance: $json.importance,\n    category: $json.category,\n    link: $json.link,\n    sourceHost: $json.sourceHost\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4800,
+        1904
+      ],
+      "id": "e273a493-d6b9-499f-894e-3f4c1efae18a",
+      "name": "Send News To Video Workflow"
     }
   ],
   "pinData": {},
@@ -2245,12 +2567,12 @@
       "main": [
         [
           {
-            "node": "IF has image2",
+            "node": "Append row in sheet",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Code - Twitter Gate1",
+            "node": "IF has image2",
             "type": "main",
             "index": 0
           }
@@ -2762,6 +3084,11 @@
       "main": [
         [
           {
+            "node": "IF Video Candidate",
+            "type": "main",
+            "index": 0
+          },
+          {
             "node": "Build caption",
             "type": "main",
             "index": 0
@@ -3125,6 +3452,123 @@
           }
         ]
       ]
+    },
+    "Read Reddit RSS - ich_iel": {
+      "main": [
+        [
+          {
+            "node": "Normalize Reddit Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Reddit Posts": {
+      "main": [
+        [
+          {
+            "node": "Prepare AI Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse ChatGPT JSON": {
+      "main": [
+        [
+          {
+            "node": "Build Telegram Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Telegram Payload": {
+      "main": [
+        [
+          {
+            "node": "Has Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Image?": {
+      "main": [
+        [
+          {
+            "node": "Send Photo to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Text to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger Reddit": {
+      "main": [
+        [
+          {
+            "node": "Read Reddit RSS - ich_iel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Prepare AI Request": {
+      "main": [
+        [
+          {
+            "node": "LLM Translation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Translation": {
+      "main": [
+        [
+          {
+            "node": "Parse ChatGPT JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Video Candidate": {
+      "main": [
+        [
+          {
+            "node": "Send News To Video Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
     }
   },
   "active": true,
@@ -3132,7 +3576,7 @@
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "8a527f88-8535-46b7-8607-beffa1b35aaa",
+  "versionId": "38ee3fb4-721e-4fbc-b365-ba7895b7c10f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "7e1238818b635a057258dc8149dc27d043c7e73895399628a1f8851e5f84116e"

@@ -108,6 +108,22 @@ Each automation is implemented as an independent workflow with a single responsi
 
 ---
 
+## Hybrid AI Video Pipeline
+
+The platform now includes a local video-production extension:
+
+- Hosted n8n selects and prepares relevant German news.
+- A configurable webhook forwards selected items to a local n8n instance.
+- Ollama creates a validated three-scene Persian storyboard.
+- ComfyUI generates vertical scene images with completion polling and timeout handling.
+- Local TTS creates Persian narration.
+- FFmpeg renders scenes, joins the video, mixes background music, and adds intro/outro assets.
+- Telegram receives the validated final video.
+
+See [Hybrid News-to-Video Pipeline](docs/local-video-pipeline.md) for architecture, setup, security, and current limitations.
+
+---
+
 ## Tech Stack
 
 | Layer            | Technology                              |
@@ -118,7 +134,10 @@ Each automation is implemented as an independent workflow with a single responsi
 | Image Source     | Wikimedia Commons REST API              |
 | News Sources     | RSS (Spiegel, FAZ, SZ, Focus, ARD, BBC) |
 | Database         | PostgreSQL / SQLite                     |
-| Language         | JavaScript                              |
+| Language         | JavaScript, Python                     |
+| Local AI         | Ollama, ComfyUI                         |
+| Video            | FFmpeg                                  |
+| Connectivity     | Webhook, Cloudflare Tunnel              |
 
 ---
 
@@ -141,7 +160,9 @@ Each automation is implemented as an independent workflow with a single responsi
 ## Setup Guide
 
 ### Prerequisites
-  - n8n instance (self-hosted or cloud), version >= 1.0
+  - Hosted n8n instance for news processing
+  - Local self-hosted n8n instance for video generation
+  - Ollama, ComfyUI, FFmpeg, and local TTS for the video pipeline
   - Telegram Bot Token (via @BotFather)
   - OpenAI API Key and/or Google Gemini API Key
   - PostgreSQL or SQLite database for deduplication

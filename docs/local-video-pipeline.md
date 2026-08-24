@@ -22,14 +22,15 @@ The project now combines a hosted news workflow with a local AI media pipeline. 
 | Ollama | Local storyboard generation |
 | ComfyUI | AI image generation |
 | FFmpeg | Scene rendering and final video assembly |
-| Cloudflare Tunnel | Temporary inbound connection from hosted n8n |
+| Cloudflare Tunnel | Stable inbound connection from hosted n8n |
 | Telegram | Final video delivery |
 
 ## Required configuration
 
 - Import `workflows/GenerateVideoGermanNewsFa.json` into the local n8n instance.
 - Configure Ollama and Telegram credentials after import. Credential IDs are intentionally not stored in Git.
-- Provide the hosted workflow with `GERMAN_NEWS_VIDEO_WEBHOOK_URL`.
+- Point the hosted workflow to the production webhook, for example
+  `https://video.example.com/webhook/german-news-video`.
 - Start ComfyUI on `http://127.0.0.1:8188` or update the corresponding HTTP Request nodes.
 - Make FFmpeg and all local rendering scripts available to the n8n process.
 - Allow only the local directories that the workflow needs through `N8N_RESTRICT_FILE_ACCESS_TO`.
@@ -37,20 +38,18 @@ The project now combines a hosted news workflow with a local AI media pipeline. 
 ## Security rules
 
 - Never commit API keys, Telegram tokens, OAuth secrets, `.env` files, or n8n credential exports.
-- Treat Cloudflare quick-tunnel URLs as temporary values.
+- Limit the published tunnel route to the production webhook path instead of exposing the complete local n8n interface.
 - Keep generated images, audio files, video files, model weights, and execution folders outside Git.
 - Use n8n Credentials or environment variables for secrets and deployment-specific URLs.
 
 ## Known limitations
 
-- A complete video run can take more than one hour depending on Ollama and ComfyUI performance.
-- Cloudflare quick-tunnel URLs change after restart unless a named tunnel is configured.
+- A complete video run currently takes a few minutes, depending on Ollama and ComfyUI performance.
 - The workflow currently assumes Windows-oriented local commands and paths.
 - Model availability and GPU memory directly affect generation time and reliability.
 
 ## Next improvements
 
-- Replace the temporary tunnel with a stable authenticated endpoint.
 - Add bounded retries around ComfyUI, TTS, and rendering failures.
 - Record execution duration per stage to identify the main bottleneck.
 - Move deployment-specific paths and service URLs into environment variables.
@@ -61,7 +60,17 @@ The project now combines a hosted news workflow with a local AI media pipeline. 
 The production helpers are stored in `scripts/`:
 
 - `video_engine.py` renders one vertical scene or finalizes a complete video from scenes, intro, and outro.
+- `merge_video.py` provides a small standalone FFmpeg concat helper.
 - `tts.py` generates Persian narration with Edge TTS and supports plain UTF-8 or Base64 input.
+
+## Windows startup
+
+The production workstation starts the local services after Windows login:
+
+- Cloudflare Tunnel runs as an automatic Windows service.
+- Ollama and Comfy Desktop are registered in the user Startup folder.
+- Comfy Desktop launches the last used instance automatically.
+- n8n starts through Task Scheduler after a short delay, with `fs` and `path` enabled for the Code nodes that manage local files.
 
 Install the Python dependency:
 

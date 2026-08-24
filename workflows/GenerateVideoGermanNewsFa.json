@@ -3,76 +3,14 @@
   "nodes": [
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.4,
-      "position": [
-        -624,
-        -336
-      ],
-      "id": "8ccdb8aa-e4b3-423c-85a9-c51c0a721432",
-      "name": "When chat message received",
-      "webhookId": "bcd60aaa-ba2f-4a15-a241-e6187a961987",
-      "retryOnFail": true,
-      "waitBetweenTries": 3000
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "You are an AI video editor for a Persian-language news channel.\n\nCreate a 60-second storyboard based only on the following news.\n\nNEWS:\n\n{{ $json.video_news_text }}\n\nRequirements:\n- Write title, voice and subtitle in fluent Persian.\n- Write image_prompt in English.\n- Create exactly 3 scenes.\n- The sum of scene durations must be exactly 60 seconds.\n- Do not invent facts.\n- Use only information contained in the supplied news.\n- Keep the narration natural and suitable for Persian news.\n- Follow the output parser format exactly.",
-        "hasOutputParser": true,
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.9,
-      "position": [
-        224,
-        -176
-      ],
-      "id": "a0cf90de-5883-4b8b-a5f8-039577ce86f0",
-      "name": "Basic LLM Chain"
-    },
-    {
-      "parameters": {
-        "model": "qwen3.5:4b",
-        "options": {
-          "temperature": 0
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
-      "typeVersion": 1,
-      "position": [
-        160,
-        64
-      ],
-      "id": "0d9521e5-0e8e-4af7-be3c-ef00e802a6af",
-      "name": "Ollama Chat Model"
-    },
-    {
-      "parameters": {
-        "jsonSchemaExample": "{\n  \"title\": \"عنوان فارسی ویدئو\",\n  \"duration\": 60,\n  \"scenes\": [\n    {\n      \"duration\": 20,\n      \"voice\": \"متن فارسی گویندگی\",\n      \"subtitle\": \"زیرنویس کوتاه فارسی\",\n      \"image_prompt\": \"Realistic editorial news photograph, vertical 9:16, no text\"\n    }\n  ]\n}"
-      },
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.3,
-      "position": [
-        368,
-        48
-      ],
-      "id": "98ef86bd-ecdc-44e8-a5c8-e1be064dea21",
-      "name": "Structured Output Parser"
-    },
-    {
-      "parameters": {
         "jsCode": "// دریافت خروجی Basic LLM Chain\nlet data = $json;\n\n// در بعضی نسخه‌ها خروجی داخل output قرار دارد\nif (data.output) {\n  data = data.output;\n}\n\n// اگر output به‌صورت رشته JSON باشد\nif (typeof data === 'string') {\n  try {\n    data = JSON.parse(data);\n  } catch (error) {\n    throw new Error(`LLM output is not valid JSON: ${error.message}`);\n  }\n}\n\n// کنترل ساختار اصلی\nif (!data || typeof data !== 'object') {\n  throw new Error('Storyboard output is empty or invalid.');\n}\n\nif (!Array.isArray(data.scenes)) {\n  throw new Error('The \"scenes\" field must be an array.');\n}\n\n// باید دقیقاً ۳ صحنه وجود داشته باشد\nif (data.scenes.length !== 3) {\n  throw new Error(\n    `Exactly 3 scenes are required, but received ${data.scenes.length}.`\n  );\n}\n\n// اعتبارسنجی هر صحنه\ndata.scenes.forEach((scene, index) => {\n  const sceneNumber = index + 1;\n\n  if (\n    typeof scene.duration !== 'number' ||\n    !Number.isFinite(scene.duration) ||\n    scene.duration <= 0\n  ) {\n    throw new Error(\n      `Scene ${sceneNumber}: duration must be a positive number.`\n    );\n  }\n\n  if (\n    typeof scene.voice !== 'string' ||\n    scene.voice.trim().length === 0\n  ) {\n    throw new Error(\n      `Scene ${sceneNumber}: voice is missing.`\n    );\n  }\n\n  if (\n    typeof scene.subtitle !== 'string' ||\n    scene.subtitle.trim().length === 0\n  ) {\n    throw new Error(\n      `Scene ${sceneNumber}: subtitle is missing.`\n    );\n  }\n\n  if (\n    typeof scene.image_prompt !== 'string' ||\n    scene.image_prompt.trim().length === 0\n  ) {\n    throw new Error(\n      `Scene ${sceneNumber}: image_prompt is missing.`\n    );\n  }\n});\n\n// محاسبه مجموع زمان صحنه‌ها\nconst calculatedDuration = data.scenes.reduce(\n  (sum, scene) => sum + scene.duration,\n  0\n);\n\nif (calculatedDuration !== 60) {\n  throw new Error(\n    `Scene durations must total 60 seconds, but total is ${calculatedDuration}.`\n  );\n}\n\n// کنترل duration اصلی\nif (data.duration !== 60) {\n  throw new Error(\n    `Top-level duration must be 60, but received ${data.duration}.`\n  );\n}\n\n// اضافه کردن شماره صحنه و تمیزکردن داده‌ها\nconst normalizedScenes = data.scenes.map((scene, index) => ({\n  scene_number: index + 1,\n  duration: scene.duration,\n  voice: scene.voice.trim(),\n  subtitle: scene.subtitle.trim(),\n  image_prompt: scene.image_prompt.trim(),\n}));\n\nreturn [\n  {\n    json: {\n      title: String(data.title || '').trim(),\n      duration: 60,\n      scene_count: normalizedScenes.length,\n      calculated_duration: calculatedDuration,\n      validation_status: 'valid',\n      scenes: normalizedScenes,\n    },\n  },\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        576,
+        704,
         -176
       ],
-      "id": "e80e1f77-a9ca-44b0-90c8-818df2ed5e15",
       "name": "ValidateStoryboard"
     },
     {
@@ -83,10 +21,9 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        800,
+        928,
         -176
       ],
-      "id": "3a2f7b52-cb39-4e89-b42c-67ecfc5101df",
       "name": "SplitScenes"
     },
     {
@@ -131,10 +68,9 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        1024,
+        1152,
         -176
       ],
-      "id": "88894f7d-e899-4a03-a24b-6a79ac550ab8",
       "name": "PrepareImagePrompt"
     },
     {
@@ -149,10 +85,9 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1696,
+        1824,
         -176
       ],
-      "id": "b8efb680-4c4e-45d1-9c26-41fc45759c1a",
       "name": "GenerateImageWithComfyUI"
     },
     {
@@ -162,10 +97,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1472,
+        1600,
         -176
       ],
-      "id": "520f52e5-39e1-4c91-bff2-f06d1662f7e6",
       "name": "BuildComfyUIPayload"
     },
     {
@@ -176,10 +110,9 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2144,
+        2272,
         -176
       ],
-      "id": "1c9de2ea-9874-42bc-bf22-b8256152a1d5",
       "name": "GetComfyUIHistory",
       "retryOnFail": true,
       "waitBetweenTries": 3000
@@ -191,10 +124,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3440,
+        2944,
         -400
       ],
-      "id": "8124e656-f46a-4a95-aba2-b41d27d46f5e",
       "name": "ExtractComfyUIImage"
     },
     {
@@ -211,10 +143,9 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3664,
+        3168,
         -400
       ],
-      "id": "7f7e866d-04e1-4e83-858b-8539d4b3c488",
       "name": "DownloadGeneratedImage"
     },
     {
@@ -224,10 +155,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3888,
+        3392,
         -400
       ],
-      "id": "9aa3e3cb-8333-4dbd-bd00-b8cb4f6af792",
       "name": "AttachSceneMetadata"
     },
     {
@@ -237,10 +167,9 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1248,
+        1376,
         -176
       ],
-      "id": "51731e93-5555-4a4b-aef3-a78dc5ee6620",
       "name": "Loop Over Items"
     },
     {
@@ -248,12 +177,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3664,
+        3168,
         16
       ],
-      "id": "0641b77c-db92-492c-b097-853f343992ed",
-      "name": "WaitBeforeHistoryCheck",
-      "webhookId": "f5dcb0ab-58fa-4349-bd4f-056979aea8a8"
+      "name": "WaitBeforeHistoryCheck"
     },
     {
       "parameters": {
@@ -262,10 +189,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2368,
+        2496,
         -256
       ],
-      "id": "b9c3eeb3-bfbf-4b93-9bcb-a8f38282e08b",
       "name": "CheckComfyUIStatus"
     },
     {
@@ -296,10 +222,9 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2592,
+        2720,
         -256
       ],
-      "id": "944c2669-9807-4f69-a682-886bd3717b66",
       "name": "IsComfyUICompleted"
     },
     {
@@ -329,10 +254,9 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3440,
+        2944,
         -160
       ],
-      "id": "fd1b7f5a-6070-4742-97d1-ffa090a026bf",
       "name": "ComfyUITimeout"
     },
     {
@@ -342,10 +266,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3664,
+        3168,
         -208
       ],
-      "id": "59f70915-6189-490f-8d7c-2d594b7ba638",
       "name": "ThrowComfyUITimeout"
     },
     {
@@ -353,12 +276,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1920,
+        2048,
         -176
       ],
-      "id": "bb9f6604-2980-4084-a054-3f7309be1f74",
-      "name": "WaitBeforeHistoryCheck1",
-      "webhookId": "f5dcb0ab-58fa-4349-bd4f-056979aea8a8"
+      "name": "WaitBeforeHistoryCheck1"
     },
     {
       "parameters": {
@@ -367,23 +288,21 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        4560,
+        4064,
         -400
       ],
-      "id": "3b8480a5-2a87-4166-a528-263204e82c4f",
       "name": "GeneratePersianVoice"
     },
     {
       "parameters": {
-        "jsCode": "const sceneNumber = Number($json.scene_number);\nconst voiceText = String($json.voice || '').trim();\n\nif (!sceneNumber) {\n  throw new Error('scene_number is missing.');\n}\n\nif (!voiceText) {\n  throw new Error(`Scene ${sceneNumber}: voice text is empty.`);\n}\n\nconst pythonPath =\n  'C:\\\\Users\\\\salis\\\\AppData\\\\Local\\\\Comfy-Desktop\\\\' +\n  'ComfyUI-Installs\\\\Comfy UI\\\\ComfyUI\\\\.venv\\\\Scripts\\\\python.exe';\n\nconst scriptPath =\n  'C:\\\\GermanNewsFA\\\\scripts\\\\tts.py';\n\nconst audioPath = $json.audio_path;\n\nif (!audioPath) {\n  throw new Error(`Scene ${sceneNumber}: audio_path is missing.`);\n}\n\nconst textBase64 = Buffer\n  .from(voiceText, 'utf8')\n  .toString('base64');\n\nconst command =\n  `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ` +\n  `\"& '${pythonPath}' ` +\n  `'${scriptPath}' ` +\n  `--text-base64 '${textBase64}' ` +\n  `--output '${audioPath}' ` +\n  `--voice 'fa-IR-FaridNeural' ` +\n  `--rate=-5% ` +\n  `--pitch=-2Hz\"`;  \n\nreturn [\n  {\n    json: {\n      ...$json,\n      text_base64: textBase64,\n      tts_command: command,\n    },\n    binary: $binary,\n  },\n];"
+        "jsCode": "const sceneNumber = Number($json.scene_number);\nconst voiceText = String($json.voice || '').trim();\n\nif (!sceneNumber) {\n  throw new Error('scene_number is missing.');\n}\n\nif (!voiceText) {\n  throw new Error(`Scene ${sceneNumber}: voice text is empty.`);\n}\n\nconst pythonPath =\n  'C:\\\\Users\\\\YOUR_WINDOWS_USER\\\\AppData\\\\Local\\\\Comfy-Desktop\\\\' +\n  'ComfyUI-Installs\\\\Comfy UI\\\\ComfyUI\\\\.venv\\\\Scripts\\\\python.exe';\n\nconst scriptPath =\n  'C:\\\\GermanNewsFA\\\\scripts\\\\tts.py';\n\nconst audioPath = $json.audio_path;\n\nif (!audioPath) {\n  throw new Error(`Scene ${sceneNumber}: audio_path is missing.`);\n}\n\nconst textBase64 = Buffer\n  .from(voiceText, 'utf8')\n  .toString('base64');\n\nconst command =\n  `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ` +\n  `\"& '${pythonPath}' ` +\n  `'${scriptPath}' ` +\n  `--text-base64 '${textBase64}' ` +\n  `--output '${audioPath}' ` +\n  `--voice 'fa-IR-FaridNeural' ` +\n  `--rate=-5% ` +\n  `--pitch=-2Hz\"`;  \n\nreturn [\n  {\n    json: {\n      ...$json,\n      text_base64: textBase64,\n      tts_command: command,\n    },\n    binary: $binary,\n  },\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4336,
+        3840,
         -400
       ],
-      "id": "ff017b62-fc89-4249-a5fa-53118f3079f9",
       "name": "PrepareTTSCommand"
     },
     {
@@ -395,23 +314,21 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        4112,
+        3616,
         -400
       ],
-      "id": "0075b3a0-8267-4942-a894-2e8b82ea94d1",
       "name": "Read/Write Files from Disk"
     },
     {
       "parameters": {
-        "jsCode": "const fs = require('fs');\n\nconst source = $('PrepareTTSCommand').item.json;\n\nconst sceneNumber = Number(source.scene_number);\nconst subtitle = String(source.subtitle || '').trim();\n\nconst pythonPath =\n  'C:\\\\Users\\\\salis\\\\AppData\\\\Local\\\\Comfy-Desktop\\\\' +\n  'ComfyUI-Installs\\\\Comfy UI\\\\ComfyUI\\\\.venv\\\\Scripts\\\\python.exe';\n\nconst scriptPath =\n  'C:\\\\GermanNewsFA\\\\scripts\\\\video_engine.py';\n\nconst imagePath = source.image_path;\nconst audioPath = source.audio_path;\nconst videoPath = source.video_path;\n\n// Debug\nif (!fs.existsSync(pythonPath)) {\n  throw new Error(`Python not found: ${pythonPath}`);\n}\n\nif (!fs.existsSync(scriptPath)) {\n  throw new Error(`video_engine.py not found: ${scriptPath}`);\n}\n\nif (!fs.existsSync(imagePath)) {\n  throw new Error(`Image not found: ${imagePath}`);\n}\n\nif (!fs.existsSync(audioPath)) {\n  throw new Error(`Audio not found: ${audioPath}`);\n}\n\nconst subtitleBase64 = Buffer\n  .from(subtitle, 'utf8')\n  .toString('base64');\n\n// مستقیم Python اجرا می‌شود؛ PowerShell حذف شد\nconst command =\n  `\"${pythonPath}\" ` +\n  `\"${scriptPath}\" ` +\n  `render-scene ` +\n  `--image \"${imagePath}\" ` +\n  `--audio \"${audioPath}\" ` +\n  `--output \"${videoPath}\" ` +\n  `--subtitle-base64 \"${subtitleBase64}\" ` +\n  `--width 1080 ` +\n  `--height 1920 ` +\n  `--fps 30`;\n\nreturn [\n  {\n    json: {\n      ...source,\n      subtitle_base64: subtitleBase64,\n      render_command: command,\n\n      debug: {\n        python_exists: fs.existsSync(pythonPath),\n        script_exists: fs.existsSync(scriptPath),\n        image_exists: fs.existsSync(imagePath),\n        audio_exists: fs.existsSync(audioPath),\n        image_path: imagePath,\n        audio_path: audioPath,\n        video_path: videoPath,\n      },\n    },\n  },\n];"
+        "jsCode": "const fs = require('fs');\n\nconst source = $('PrepareTTSCommand').item.json;\n\nconst sceneNumber = Number(source.scene_number);\nconst subtitle = String(source.subtitle || '').trim();\n\nconst pythonPath =\n  'C:\\\\Users\\\\YOUR_WINDOWS_USER\\\\AppData\\\\Local\\\\Comfy-Desktop\\\\' +\n  'ComfyUI-Installs\\\\Comfy UI\\\\ComfyUI\\\\.venv\\\\Scripts\\\\python.exe';\n\nconst scriptPath =\n  'C:\\\\GermanNewsFA\\\\scripts\\\\video_engine.py';\n\nconst imagePath = source.image_path;\nconst audioPath = source.audio_path;\nconst videoPath = source.video_path;\n\n// Debug\nif (!fs.existsSync(pythonPath)) {\n  throw new Error(`Python not found: ${pythonPath}`);\n}\n\nif (!fs.existsSync(scriptPath)) {\n  throw new Error(`video_engine.py not found: ${scriptPath}`);\n}\n\nif (!fs.existsSync(imagePath)) {\n  throw new Error(`Image not found: ${imagePath}`);\n}\n\nif (!fs.existsSync(audioPath)) {\n  throw new Error(`Audio not found: ${audioPath}`);\n}\n\nconst subtitleBase64 = Buffer\n  .from(subtitle, 'utf8')\n  .toString('base64');\n\n// مستقیم Python اجرا می‌شود؛ PowerShell حذف شد\nconst command =\n  `\"${pythonPath}\" ` +\n  `\"${scriptPath}\" ` +\n  `render-scene ` +\n  `--image \"${imagePath}\" ` +\n  `--audio \"${audioPath}\" ` +\n  `--output \"${videoPath}\" ` +\n  `--subtitle-base64 \"${subtitleBase64}\" ` +\n  `--width 1080 ` +\n  `--height 1920 ` +\n  `--fps 30`;\n\nreturn [\n  {\n    json: {\n      ...source,\n      subtitle_base64: subtitleBase64,\n      render_command: command,\n\n      debug: {\n        python_exists: fs.existsSync(pythonPath),\n        script_exists: fs.existsSync(scriptPath),\n        image_exists: fs.existsSync(imagePath),\n        audio_exists: fs.existsSync(audioPath),\n        image_path: imagePath,\n        audio_path: audioPath,\n        video_path: videoPath,\n      },\n    },\n  },\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4784,
+        4288,
         -400
       ],
-      "id": "433d951a-86d6-4301-8af8-b4fce7135162",
       "name": "PrepareRenderSceneCommand"
     },
     {
@@ -421,10 +338,9 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        5008,
+        4512,
         -400
       ],
-      "id": "21ac7aa9-cf5a-4e58-919d-be9b95bce914",
       "name": "RenderSceneVideo",
       "retryOnFail": true
     },
@@ -435,10 +351,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5232,
+        4736,
         -112
       ],
-      "id": "4ee88c96-abd7-4a53-b4c5-e742dead73b8",
       "name": "ValidateRenderedScene"
     },
     {
@@ -448,10 +363,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1472,
+        1600,
         -592
       ],
-      "id": "129c7276-927d-433c-b308-0b7a10b092da",
       "name": "BuildConcatCommand"
     },
     {
@@ -461,10 +375,9 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        1696,
+        1824,
         -592
       ],
-      "id": "961f72b8-a402-48d3-9038-4b40b47accda",
       "name": "MergeVideos"
     },
     {
@@ -474,10 +387,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1920,
+        2048,
         -592
       ],
-      "id": "621e0a09-b561-44d0-97c1-a99c1c6b940f",
       "name": "ValidateFinalVideo"
     },
     {
@@ -488,16 +400,15 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        3440,
+        3616,
         -592
       ],
-      "id": "e21b050d-b138-4a98-8ef5-d6163513709b",
       "name": "ReadFinalVideo"
     },
     {
       "parameters": {
         "operation": "sendVideo",
-        "chatId": "-1004481078210",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "binaryData": true,
         "additionalFields": {
           "caption": "={{ \"🎥 \" + $('ValidateStoryboard').first().json.title }}"
@@ -506,26 +417,23 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3664,
+        3840,
         -592
       ],
-      "id": "ec3e0713-46a8-449b-97d2-239ddf02b1e4",
       "name": "SendFinalVideo",
-      "webhookId": "b1c4ede4-2c10-4a8f-bfbf-5f1a9d1fc0af",
       "retryOnFail": true,
       "waitBetweenTries": 5000
     },
     {
       "parameters": {
-        "jsCode": "const fs = require('fs');\nconst path = require('path');\n\nconst source = $('ValidateFinalVideo').first().json;\n\nconst executionFolder = source.execution_folder;\nconst finalVideo = source.final_video;\n\nif (!executionFolder) {\n  throw new Error('execution_folder is missing.');\n}\n\nif (!fs.existsSync(executionFolder)) {\n  return [\n    {\n      json: {\n        cleanup_status: 'skipped',\n        reason: 'Execution folder does not exist.',\n        execution_folder: executionFolder,\n      },\n    },\n  ];\n}\n\n// فعلاً فایل نهایی را نگه می‌داریم\nconst keepFiles = new Set([\n  path.basename(finalVideo),\n]);\n\nconst deletedFiles = [];\nconst keptFiles = [];\n\nfor (const entry of fs.readdirSync(executionFolder)) {\n  const fullPath = path.join(executionFolder, entry);\n\n  if (keepFiles.has(entry)) {\n    keptFiles.push(fullPath);\n    continue;\n  }\n\n  const stats = fs.statSync(fullPath);\n\n  if (stats.isFile()) {\n    fs.unlinkSync(fullPath);\n    deletedFiles.push(fullPath);\n  }\n}\n\nreturn [\n  {\n    json: {\n      cleanup_status: 'success',\n      execution_folder: executionFolder,\n      deleted_count: deletedFiles.length,\n      deleted_files: deletedFiles,\n      kept_files: keptFiles,\n    },\n  },\n];"
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\n\nconst source = $('ValidateCompleteVideo').first().json;\n\nconst executionFolder = source.execution_folder;\nconst finalVideo = source.final_video;\n\nif (!executionFolder) {\n  throw new Error('execution_folder is missing.');\n}\n\nif (!fs.existsSync(executionFolder)) {\n  return [\n    {\n      json: {\n        cleanup_status: 'skipped',\n        reason: 'Execution folder does not exist.',\n        execution_folder: executionFolder,\n      },\n    },\n  ];\n}\n\n// فعلاً فایل نهایی را نگه می‌داریم\nconst keepFiles = new Set([\n  path.basename(finalVideo),\n]);\n\nconst deletedFiles = [];\nconst keptFiles = [];\n\nfor (const entry of fs.readdirSync(executionFolder)) {\n  const fullPath = path.join(executionFolder, entry);\n\n  if (keepFiles.has(entry)) {\n    keptFiles.push(fullPath);\n    continue;\n  }\n\n  const stats = fs.statSync(fullPath);\n\n  if (stats.isFile()) {\n    fs.unlinkSync(fullPath);\n    deletedFiles.push(fullPath);\n  }\n}\n\nreturn [\n  {\n    json: {\n      cleanup_status: 'success',\n      execution_folder: executionFolder,\n      deleted_count: deletedFiles.length,\n      deleted_files: deletedFiles,\n      kept_files: keptFiles,\n    },\n  },\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3888,
+        4064,
         -592
       ],
-      "id": "b8b96051-6380-4d72-894e-4dd142900dfd",
       "name": "CleanupExecutionFolder"
     },
     {
@@ -535,10 +443,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2144,
+        2272,
         -592
       ],
-      "id": "838c5751-be03-4975-9ce5-0a0281a3f296",
       "name": "BuildMusicCommand"
     },
     {
@@ -548,10 +455,9 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        2368,
+        2496,
         -592
       ],
-      "id": "ac2f6911-481d-4894-9da5-c8a9e7e348d2",
       "name": "AddBackgroundMusic"
     },
     {
@@ -561,10 +467,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2592,
+        2720,
         -592
       ],
-      "id": "559285ff-ab2f-4ced-a725-097ff18b0f3d",
       "name": "ValidateVideoWithMusic"
     },
     {
@@ -574,10 +479,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2800,
+        2944,
         -592
       ],
-      "id": "5695ba91-545a-49c7-8121-994eb28fcee3",
       "name": "BuildIntroOutroCommand"
     },
     {
@@ -587,10 +491,9 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        3008,
+        3168,
         -592
       ],
-      "id": "7a7c8c36-6be0-464d-9760-a390aaefb4d6",
       "name": "Execute Command"
     },
     {
@@ -600,10 +503,9 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3216,
+        3392,
         -592
       ],
-      "id": "423bf5c8-9835-4f38-8b70-a2bfaccb4e9b",
       "name": "ValidateCompleteVideo"
     },
     {
@@ -616,11 +518,9 @@
       "typeVersion": 2.1,
       "position": [
         -192,
-        -128
+        -176
       ],
-      "id": "4cbc5c2f-609d-4033-933d-8666d65734a6",
-      "name": "ReceiveNewsFromHost",
-      "webhookId": "768f10ef-9be0-40c4-ac08-e581e8259dc2"
+      "name": "ReceiveNewsFromHost"
     },
     {
       "parameters": {
@@ -629,53 +529,42 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        16,
-        -128
+        32,
+        -176
       ],
-      "id": "9244a0dc-1f6f-4740-a79c-fd9fbbf11b59",
       "name": "Prepare Video News"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    model: \"qwen3.5:4b\",\n    messages: [\n      {\n        role: \"user\",\n        content: `You are an AI video editor for a Persian-language news channel.\n\nCreate a 60-second storyboard based only on the supplied news.\n\nNEWS:\n\n${$json.video_news_text}\n\nRequirements:\n- Create exactly 3 scenes.\n- The total duration of all scenes must be exactly 60 seconds.\n- Write title, voice and subtitle in fluent Persian.\n- Write image_prompt in English.\n- Do not invent facts.\n- Use only information contained in the news.\n- Return only valid JSON.`\n      }\n    ],\n    stream: false,\n    think: false,\n    keep_alive: 0,\n    format: {\n      type: \"object\",\n      properties: {\n        title: {\n          type: \"string\"\n        },\n        duration: {\n          type: \"integer\",\n          enum: [60]\n        },\n        scenes: {\n          type: \"array\",\n          minItems: 3,\n          maxItems: 3,\n          items: {\n            type: \"object\",\n            properties: {\n              duration: {\n                type: \"integer\",\n                minimum: 1\n              },\n              voice: {\n                type: \"string\"\n              },\n              subtitle: {\n                type: \"string\"\n              },\n              image_prompt: {\n                type: \"string\"\n              }\n            },\n            required: [\n              \"duration\",\n              \"voice\",\n              \"subtitle\",\n              \"image_prompt\"\n            ]\n          }\n        }\n      },\n      required: [\n        \"title\",\n        \"duration\",\n        \"scenes\"\n      ]\n    }\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        256,
+        -176
+      ],
+      "name": "GenerateStoryboardWithOllama"
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = $json.message?.content;\n\nif (!content || typeof content !== 'string') {\n  throw new Error(\n    'Ollama response does not contain message.content.'\n  );\n}\n\nlet storyboard;\n\ntry {\n  storyboard = JSON.parse(content);\n} catch (error) {\n  throw new Error(\n    `Ollama returned invalid JSON: ${error.message}\\n\\n` +\n    `Raw content:\\n${content}`\n  );\n}\n\nif (\n  !storyboard ||\n  typeof storyboard !== 'object' ||\n  Array.isArray(storyboard)\n) {\n  throw new Error(\n    'Parsed Ollama storyboard is not a valid object.'\n  );\n}\n\nreturn [\n  {\n    json: storyboard,\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -176
+      ],
+      "name": "ParseOllamaStoryboard"
     }
   ],
-  "pinData": {},
   "connections": {
-    "When chat message received": {
-      "main": [
-        []
-      ]
-    },
-    "Ollama Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Basic LLM Chain",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Basic LLM Chain": {
-      "main": [
-        [
-          {
-            "node": "ValidateStoryboard",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Structured Output Parser": {
-      "ai_outputParser": [
-        [
-          {
-            "node": "Basic LLM Chain",
-            "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "ValidateStoryboard": {
       "main": [
         [
@@ -1074,7 +963,29 @@
       "main": [
         [
           {
-            "node": "Basic LLM Chain",
+            "node": "GenerateStoryboardWithOllama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GenerateStoryboardWithOllama": {
+      "main": [
+        [
+          {
+            "node": "ParseOllamaStoryboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ParseOllamaStoryboard": {
+      "main": [
+        [
+          {
+            "node": "ValidateStoryboard",
             "type": "main",
             "index": 0
           }
@@ -1088,12 +999,6 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "b7e324de-8a8d-4b93-bc5b-682ae95a8cad",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "804dd35f10dad27252ca2ea1a8f9c2d56b4844c46b52af765a95962490c5c116"
-  },
   "nodeGroups": [],
-  "id": "evHljOUU0oRZGmOC",
   "tags": []
 }

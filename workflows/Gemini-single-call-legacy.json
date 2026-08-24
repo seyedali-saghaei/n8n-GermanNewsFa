@@ -13,7 +13,6 @@
         },
         "options": {}
       },
-      "id": "694658a5-5150-434e-8593-d253860ca7d7",
       "name": "Set provider (openai|gemini)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
@@ -32,7 +31,6 @@
         2080,
         848
       ],
-      "id": "4bf37260-b965-41ba-91cc-11a925914bce",
       "name": "Build caption"
     },
     {
@@ -45,7 +43,6 @@
         -1280,
         848
       ],
-      "id": "5733cf1a-7777-47f5-a3d9-fc7cd674d8b2",
       "name": "Extract imageUrl & teaser"
     },
     {
@@ -58,7 +55,6 @@
         2304,
         848
       ],
-      "id": "716c61fb-bbc9-46cc-8a22-4c5356e0a74a",
       "name": "Build Telegram payload1"
     },
     {
@@ -93,7 +89,6 @@
         2528,
         688
       ],
-      "id": "e099a00d-8ec8-473e-b626-c82e1cc98a54",
       "name": "IF has image2"
     },
     {
@@ -101,7 +96,6 @@
         "url": "https://www.spiegel.de/schlagzeilen/index.rss",
         "options": {}
       },
-      "id": "3b6a2b44-9498-4c36-95ba-49bb4b162539",
       "name": "RSS Read (Spiegel News)",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
@@ -115,7 +109,6 @@
         "url": "https://www.focus.de/politik/rss",
         "options": {}
       },
-      "id": "41e07e21-722c-4ee5-9aae-d4c33e581f7a",
       "name": "RSS Read (focus)",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
@@ -127,7 +120,7 @@
     {
       "parameters": {
         "operation": "sendPhoto",
-        "chatId": "-1002971367902",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "file": "={{ $json.telegram.photo }}\n",
         "replyMarkup": "={{ (() => {\n  const s = $json.telegram.replyMarkupJSON;\n  if (!s) return undefined;\n  try { return JSON.parse(s); } catch (e) { return undefined; }\n})() }}\n",
         "forceReply": {},
@@ -138,7 +131,6 @@
           "parse_mode": "HTML"
         }
       },
-      "id": "22cb1887-8896-4b0b-87c0-77e2324ad691",
       "name": "Send a photo message1",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -146,14 +138,7 @@
         2976,
         672
       ],
-      "webhookId": "b7fade46-9af9-4a64-b4d9-6533cb0aecb6",
-      "retryOnFail": true,
-      "credentials": {
-        "telegramApi": {
-          "id": "faL61AMBS4FqMyK7",
-          "name": "Telegram account"
-        }
-      }
+      "retryOnFail": true
     },
     {
       "parameters": {},
@@ -163,7 +148,6 @@
         -2848,
         464
       ],
-      "id": "50be1da4-ff5d-4b5f-a46e-57883ff1b050",
       "name": "Merge (Spiegel + FAZ)"
     },
     {
@@ -174,7 +158,6 @@
         -2848,
         848
       ],
-      "id": "71fd841c-b7f7-4554-b02e-a15f9df51c6f",
       "name": "Merge(SZ + Tagesschau)"
     },
     {
@@ -182,7 +165,6 @@
         "url": "https://rss.sueddeutsche.de/rss/Alles",
         "options": {}
       },
-      "id": "69292234-0616-426f-b00f-214f861d71fc",
       "name": "RSS Read (SZ)",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
@@ -193,7 +175,6 @@
     },
     {
       "parameters": {},
-      "id": "93479314-2339-45f7-9f94-fc8fe2193649",
       "name": "Merge (RSS All)",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2,
@@ -210,7 +191,6 @@
         -2624,
         1040
       ],
-      "id": "6646e04b-dec3-468e-8080-4776a4347c47",
       "name": "Merge((SZ+TG)+(Fo+Welt))"
     },
     {
@@ -223,7 +203,6 @@
         -2176,
         848
       ],
-      "id": "60b55f86-87e3-4412-ad13-51453387e592",
       "name": "Time window (last 15 min)"
     },
     {
@@ -236,14 +215,12 @@
         -1952,
         848
       ],
-      "id": "b652962d-f936-42c5-b412-a13c241829ad",
       "name": "Code (Static Data)"
     },
     {
       "parameters": {
         "jsCode": "// Normalize + in-run dedupe + sort (with canonical link)\n// Output fields: title, link, isoDate, pubDate, content, imageUrl, sourceHost, sourceFeed\n\nconst items = $input.all();\n\nfunction toStr(v){ return (v ?? '').toString().trim(); }\nfunction hostFrom(link=''){\n  const m = link.match(/^https?:\\/\\/([^\\/?#]+)/i);\n  return m ? m[1].replace(/^www\\./,'') : '';\n}\nfunction absolutize(url='', base=''){\n  if (!url) return '';\n  if (/^https?:\\/\\//i.test(url)) return url;\n  if (url.startsWith('//')) return 'https:' + url;\n  if (url.startsWith('/')) {\n    const m = base.match(/^(https?:\\/\\/[^\\/?#]+)/i);\n    if (m) return m[1] + url;\n  }\n  return url;\n}\nfunction firstImgFromHtml(html=''){\n  if (typeof html !== 'string') return '';\n  const m = html.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);\n  return m?.[1] || '';\n}\nfunction canonicalizeLink(url=''){\n  if (!url) return '';\n  try {\n    const u = new URL(url);\n    // drop tracking params\n    const drop = [\n      'utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id',\n      'utm_reader','utm_name','utm_cid','utm_referrer','fbclid','gclid','igshid','mc_cid','mc_eid'\n    ];\n    drop.forEach(p => u.searchParams.delete(p));\n    // normalize trailing slash\n    u.pathname = u.pathname.replace(/\\/+$/,'');\n    // force https for stability (optional)\n    u.protocol = 'https:';\n    return u.toString();\n  } catch {\n    return url;\n  }\n}\nfunction pickImage(j) {\n  const mc = j['media:content'];\n  if (mc) {\n    if (Array.isArray(mc)) {\n      const found = mc.find(x => x?.url);\n      if (found?.url) return toStr(found.url);\n    } else if (typeof mc === 'object' && mc.url) {\n      return toStr(mc.url);\n    }\n  }\n  const mt = j['media:thumbnail'];\n  if (mt) {\n    if (Array.isArray(mt)) {\n      const found = mt.find(x => x?.url);\n      if (found?.url) return toStr(found.url);\n    } else if (typeof mt === 'object' && mt.url) {\n      return toStr(mt.url);\n    }\n  }\n  const mg = j['media:group'];\n  if (mg?.['media:content']?.url) return toStr(mg['media:content'].url);\n\n  if (j.enclosure?.url) return toStr(j.enclosure.url);\n\n  if (j.image?.url) return toStr(j.image.url);\n  if (j.thumbnail?.url) return toStr(j.thumbnail.url);\n  if (j['itunes:image']?.href) return toStr(j['itunes:image'].href);\n\n  const html = j['content:encoded'] || j.content || j.summary || j.description || '';\n  const imgFromHtml = firstImgFromHtml(html);\n  if (imgFromHtml) return toStr(imgFromHtml);\n\n  return '';\n}\n\nconst seen = new Set();\nlet out = [];\n\nfor (const it of items) {\n  const j = it.json ?? {};\n  const rawLink = toStr(j.link || j.guid);\n  if (!rawLink) continue;\n\n  const linkKey = canonicalizeLink(rawLink);\n  if (!linkKey) continue;\n\n  // in-run dedupe by canonical link\n  if (seen.has(linkKey)) continue;\n  seen.add(linkKey);\n\n  // parse/normalize dates\n  const rawDate = j.isoDate || j.pubDate || j.date || null;\n  let iso = null, pub = null;\n  if (rawDate) {\n    const ts = Date.parse(rawDate);\n    if (!Number.isNaN(ts)) {\n      const d = new Date(ts);\n      iso = d.toISOString();\n      pub = d.toUTCString();\n    }\n  }\n\n  // pick/normalize image\n  let img = toStr(j.imageUrl) || pickImage(j);\n  img = absolutize(img, linkKey);\n\n  out.push({\n    json: {\n      sourceHost: hostFrom(linkKey) || hostFrom(j.feedUrl || ''),\n      sourceFeed: j.feedTitle || j.meta?.title || j.source || '',\n      title: toStr(j.title),\n      link: linkKey,                  // ← use canonical link\n      isoDate: iso,\n      pubDate: pub,\n      content: toStr(j.contentSnippet || j.summary || j.content || j['content:encoded'] || ''),\n      imageUrl: img || '',\n    },\n  });\n}\n\n// newest first\nout.sort((a,b) => {\n  const ta = a.json.isoDate ? Date.parse(a.json.isoDate) : 0;\n  const tb = b.json.isoDate ? Date.parse(b.json.isoDate) : 0;\n  return tb - ta;\n});\n\n// cap list size if you want\nconst LIMIT = 5;\nif (out.length > LIMIT) out = out.slice(0, LIMIT);\n\nreturn out;\n"
       },
-      "id": "7bda9742-adc4-4b5f-8e57-4a5c2f882caa",
       "name": "Code (Normalize + Dedupe + Sort)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -262,7 +239,6 @@
         -1504,
         848
       ],
-      "id": "bfaf4a62-41c9-4c8c-aa1f-686cafc9944b",
       "name": "Code in JavaScript"
     },
     {
@@ -273,7 +249,6 @@
         -2848,
         1232
       ],
-      "id": "7e878173-42a5-4616-a7e2-2ccedf001762",
       "name": "Merge1"
     },
     {
@@ -281,7 +256,6 @@
         "url": "https://www.faz.net/rss/aktuell",
         "options": {}
       },
-      "id": "14f79e25-25eb-4697-baf7-4cb85744dc56",
       "name": "RSS Read (FAZ )",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
@@ -300,7 +274,6 @@
         1856,
         848
       ],
-      "id": "95f2d21b-74fb-43f1-aa5b-caf34292bcfb",
       "name": "Ensure Parens (Glossary)"
     },
     {
@@ -314,7 +287,6 @@
         -3072,
         1520
       ],
-      "id": "85ec07a1-4295-416d-82a7-4fdb4a5e8af9",
       "name": "RSS Read(BBC)"
     },
     {
@@ -325,7 +297,6 @@
         -2848,
         1520
       ],
-      "id": "754bff7f-bdf2-4bf7-bcbb-96da646988ff",
       "name": "Merge (FA style feeds)"
     },
     {
@@ -338,7 +309,6 @@
         -2624,
         1520
       ],
-      "id": "46e8a496-46d7-495f-8429-d2dcb18d850f",
       "name": "Code (staticData.style_bank)"
     },
     {
@@ -351,7 +321,6 @@
         1632,
         848
       ],
-      "id": "fa0395e9-127b-408e-9333-4cb1a8f74403",
       "name": "Code (Post-process FA)"
     },
     {
@@ -362,7 +331,6 @@
         1184,
         848
       ],
-      "id": "3dbd1464-5bdc-41a3-88e0-03b229e6f692",
       "name": "Merge4"
     },
     {
@@ -377,7 +345,6 @@
         960,
         752
       ],
-      "id": "a363241c-0d30-4c12-a7ac-25418e3e5a21",
       "name": "Merge"
     },
     {
@@ -390,7 +357,6 @@
         1408,
         848
       ],
-      "id": "78e3c2f1-ff99-4955-af54-d17ea74cc8f6",
       "name": "Pick title_fa (OpenAI)"
     },
     {
@@ -423,14 +389,7 @@
         736,
         832
       ],
-      "id": "f3185e11-0950-4491-bdd0-f9c38965c3fa",
-      "name": "OpenAI Translate (HTTP)",
-      "credentials": {
-        "openAiApi": {
-          "id": "KjKOsKr6CDGeWImb",
-          "name": "OpenAi account"
-        }
-      }
+      "name": "OpenAI Translate (HTTP)"
     },
     {
       "parameters": {
@@ -442,7 +401,6 @@
         512,
         752
       ],
-      "id": "b6d9dcff-fb20-4980-a5c0-8d874ed7dcd8",
       "name": "Build OpenAI body"
     },
     {
@@ -470,7 +428,6 @@
         },
         "options": {}
       },
-      "id": "e1a59a1f-3bbd-4b62-b178-c85ce0876d76",
       "name": "IF provider == gemini",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -481,7 +438,6 @@
     },
     {
       "parameters": {},
-      "id": "792fad46-2b7c-4c08-816e-7956521d042f",
       "name": "➡ Next: Post-process FA / Caption1",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
@@ -494,7 +450,6 @@
       "parameters": {
         "jsCode": "// Code node — Pick title_fa (Gemini)\nconst out = $input.all().map(item => {\n  const r = item.json.body ?? item.json;\n  const raw = r?.candidates?.[0]?.content?.parts?.[0]?.text || '';\n  let title_fa = '', teaser_fa = '';\n\n  try {\n    const parsed = JSON.parse(raw);\n    title_fa  = (parsed.title_fa  || '').trim();\n    teaser_fa = (parsed.teaser_fa || '').trim();\n    if (parsed.link) item.json.link = parsed.link;\n  } catch (e) {\n    title_fa = raw.trim();\n  }\n\n  item.json.title_fa  = title_fa;\n  item.json.teaser_fa = teaser_fa;\n  return item;\n});\n\nreturn out;\n"
       },
-      "id": "b1cb8f90-af93-4052-bd4e-b62a7ec23aa7",
       "name": "Pick title_fa (Gemini)2",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -523,26 +478,18 @@
         "jsonBody": "={{ $json.gemini_en2fa }}",
         "options": {}
       },
-      "id": "7a098348-1da0-41cc-a9c4-f33015ee19b1",
       "name": "Gemini Translate EN→FA (HTTP)1",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
         512,
         1024
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "lr7lC8wIkv3I5RTZ",
-          "name": "Header Auth account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
         "jsCode": "// Code node — Build Gemini body (EN→FA)\nconst items = $input.all();\nconst staticData = $getWorkflowStaticData('global');\nconst glossary = staticData.glossary || {};\n\nfunction pairs(gloss){\n  return Object.entries(gloss).map(([de, fa]) => `- ${de} → ${fa}`).join('\\n');\n}\n\nfunction buildSystem(gloss){\n  return `\nتو یک مترجم حرفه‌ای هستی که متن‌های خبری انگلیسی را به فارسی روان و خبر‌نویس ترجمه می‌کنی.\nقوانین:\n- تیتر کوتاه و خبری؛ افزودن اطلاعات جدید ممنوع.\n- اگر «President of the US» بدون اسم آمد، فقط «رئیس‌جمهور آمریکا» بنویس و حدس نزن.\n- اسم‌های خاص را با معادل رایج فارسی و بلافاصله نام لاتین در پرانتز بنویس.\n- مخفف‌ها مثل «حزب سوسیال‌دموکرات آلمان (SPD)».\n- اعداد فارسی؛ علائم نگارشی فارسی؛ لحن بی‌طرف.\n- لینک منبع را در کلید link برگردان.\n- خروجی فقط JSON باشد: {\"title_fa\":\"...\", \"teaser_fa\":\"...\", \"link\":\"...\"}\n\nواژه‌نامه:\n${pairs(gloss)}\n`.trim();\n}\n\nreturn items.map(item => {\n  const j = item.json || {};\n  const titleEn  = (j.title_en || '').toString();\n  const teaserEn = (j.teaser_en || '').toString();\n  const link     = (j.link || '').toString();\n\n  j.gemini_en2fa = {\n    model: \"models/gemini-1.5-flash\",\n    system_instruction: { parts: [{ text: buildSystem(glossary) }] },\n    generationConfig: {\n      temperature: 0.2,\n      response_mime_type: \"application/json\",\n      maxOutputTokens: 700\n    },\n    contents: [\n      {\n        role: \"user\",\n        parts: [{\n          text:\n`English Title:\n${titleEn}\n\nEnglish Teaser:\n${teaserEn}\n\nLink:\n${link}`\n        }]\n      }\n    ]\n  };\n\n  return { json: j };\n});\n"
       },
-      "id": "ee2e0603-485c-46f9-bb3d-1c7e1a61f0e7",
       "name": "Build Gemini body (EN→FA)2",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -555,7 +502,6 @@
       "parameters": {
         "jsCode": "// Code node — Pick EN fields\nconst out = $input.all().map(it => {\n  const r = it.json.body ?? it.json;\n  const raw = r?.candidates?.[0]?.content?.parts?.[0]?.text || '';\n  let title_en='', teaser_en='', link='';\n  try {\n    const parsed = JSON.parse(raw);\n    title_en  = (parsed.title_en  || '').trim();\n    teaser_en = (parsed.teaser_en || '').trim();\n    link      = (parsed.link      || it.json.link || '').trim();\n  } catch (e) {\n    teaser_en = (raw || '').trim();\n    link = it.json.link || '';\n  }\n\n  it.json.title_en  = title_en;\n  it.json.teaser_en = teaser_en;\n  it.json.link      = link;\n  return it;\n});\n\nreturn out;\n"
       },
-      "id": "2b899911-343c-4b78-a193-6d24b776645f",
       "name": "Pick EN fields2",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -584,26 +530,18 @@
         "jsonBody": "={{ $json.gemini_de2en }}",
         "options": {}
       },
-      "id": "554af38d-e1b3-4eaf-be1a-14a86fee02d5",
       "name": "Gemini Translate DE→EN (HTTP)3",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
         -160,
         1024
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "lr7lC8wIkv3I5RTZ",
-          "name": "Header Auth account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
         "jsCode": "// Code node — Build Gemini body (DE→EN) — FIXED\nconst items = $input.all();\n\nfunction buildSystem() {\n  return `\nYou are a professional translator.\nTask: Translate German news headline and first paragraph to **concise journalistic English**.\n- Do NOT add any facts.\n- Keep links untouched and pass them back as \"link\".\n- Output strict JSON: {\"title_en\":\"...\", \"teaser_en\":\"...\", \"link\":\"...\"}\n`.trim();\n}\n\nreturn items.map(item => {\n  const j = item.json || {};\n  const titleDe  = (j.title || '').toString();\n  const teaserDe = (j.teaser_de || j.teaser || j.content || '').toString();\n  const link     = (j.link || j.url || '').toString();\n\n  j.gemini_de2en = {\n    // ❗ این فیلد در v1beta نیازی به قرار گرفتن در body ندارد؛ مدل در URL تعیین می‌شود\n    systemInstruction: { parts: [{ text: buildSystem() }] },\n    generationConfig: {\n      temperature: 0.2,\n      responseMimeType: \"application/json\"\n    },\n    contents: [\n      {\n        role: \"user\",\n        parts: [{\n          text:\n`German Title:\n${titleDe}\n\nGerman Teaser:\n${teaserDe}\n\nLink:\n${link}`\n        }]\n      }\n    ]\n  };\n\n  return { json: j };\n});\n"
       },
-      "id": "48f3c0cd-97d9-4af0-ad63-a0f535feb2d2",
       "name": "Build Gemini body (DE→EN)2",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -614,7 +552,6 @@
     },
     {
       "parameters": {},
-      "id": "f9e01d7a-0a7b-4011-b152-9d428f76f5d7",
       "name": "🔌 Gemini Branch IN1",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
@@ -635,7 +572,6 @@
           ]
         }
       },
-      "id": "6be83c1f-4c70-4864-bfce-ee787818fd3a",
       "name": "Cron (every 20min)1",
       "type": "n8n-nodes-base.cron",
       "typeVersion": 1,
@@ -675,7 +611,6 @@
         2752,
         1024
       ],
-      "id": "386cfac2-abe9-41ad-984f-6f0b1a45c41f",
       "name": "IF Twitter OK"
     },
     {
@@ -688,7 +623,6 @@
         2528,
         1024
       ],
-      "id": "1bb2db89-4695-4fa8-a6cf-15c4600909b8",
       "name": "Code - Twitter Gate1"
     },
     {
@@ -702,14 +636,7 @@
         3200,
         944
       ],
-      "id": "31674d91-b709-4bc2-a432-8b9cec4ff4cc",
-      "name": "Create Tweet1",
-      "credentials": {
-        "twitterOAuth2Api": {
-          "id": "r7Erp0oAdQ7xm9lf",
-          "name": "X account 2"
-        }
-      }
+      "name": "Create Tweet1"
     },
     {
       "parameters": {
@@ -721,7 +648,6 @@
         3424,
         944
       ],
-      "id": "eca1e991-b657-4d66-b5fa-b77ec1c4689b",
       "name": "Code-Twitter Static Data1"
     },
     {
@@ -729,7 +655,6 @@
         "batchSize": 3,
         "options": {}
       },
-      "id": "adaf5c90-c176-4925-94a9-1e7fec34310c",
       "name": "SplitInBatches1",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -743,22 +668,19 @@
         "amount": 59,
         "unit": "minutes"
       },
-      "id": "153598f8-f645-4eef-9d18-dab63762bb14",
       "name": "Wait 60s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
         3648,
         1024
-      ],
-      "webhookId": "8f54b5a3-ccac-4d1d-97df-998901233f3b"
+      ]
     },
     {
       "parameters": {
         "url": "https://www.tagesschau.de/xml/rss2/",
         "options": {}
       },
-      "id": "bdcae00c-92ec-4923-b4d7-fb2bec024e0a",
       "name": "RSS Read (Tagesschau)",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
@@ -778,12 +700,11 @@
         3200,
         672
       ],
-      "id": "534ac62f-a166-47c6-999c-65581312e95b",
       "name": "Explode textChunks"
     },
     {
       "parameters": {
-        "chatId": "-1002971367902",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "={{ $json.telegram.textChunks }}",
         "additionalFields": {
           "parse_mode": "HTML"
@@ -795,15 +716,7 @@
         3424,
         672
       ],
-      "id": "faea241e-7b9d-4c81-93bd-71412f365f8a",
-      "name": "Send a text message",
-      "webhookId": "ccabbd7c-e0fd-497a-bc93-b9798a46046e",
-      "credentials": {
-        "telegramApi": {
-          "id": "faL61AMBS4FqMyK7",
-          "name": "Telegram account"
-        }
-      }
+      "name": "Send a text message"
     },
     {
       "parameters": {
@@ -821,7 +734,6 @@
         -3296,
         2128
       ],
-      "id": "29ac5a05-11a3-4efc-9cea-78b8ee838b3e",
       "name": "Schedule Trigger"
     },
     {
@@ -834,12 +746,11 @@
         -3088,
         2128
       ],
-      "id": "dfaab1e3-036a-488c-8377-450a6765672b",
       "name": "Build Daily Calendar Text"
     },
     {
       "parameters": {
-        "chatId": "-1002971367902",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "={{$json.telegram.photo}}\n",
         "additionalFields": {
           "parse_mode": "HTML",
@@ -852,18 +763,9 @@
         -2816,
         2128
       ],
-      "id": "884c4aa8-2894-479e-9669-8fcb013fe415",
-      "name": "Send a text message1",
-      "webhookId": "ccabbd7c-e0fd-497a-bc93-b9798a46046e",
-      "credentials": {
-        "telegramApi": {
-          "id": "faL61AMBS4FqMyK7",
-          "name": "Telegram account"
-        }
-      }
+      "name": "Send a text message1"
     }
   ],
-  "pinData": {},
   "connections": {
     "Set provider (openai|gemini)": {
       "main": [
@@ -1202,39 +1104,6 @@
         ]
       ]
     },
-    "IF provider == openai": {
-      "main": [
-        [
-          {
-            "node": "🔌 Gemini Branch IN",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "🔌 Gemini Branch IN1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Build OpenAI body",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Build OpenAI body",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "🔌 Gemini Branch IN1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Pick title_fa (Gemini)2": {
       "main": [
         [
@@ -1475,16 +1344,10 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "2399dc5b-39bb-4986-a818-a69154329229",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "7e1238818b635a057258dc8149dc27d043c7e73895399628a1f8851e5f84116e"
-  },
-  "id": "kcgi7lR7Er0gq53G",
   "tags": []
 }

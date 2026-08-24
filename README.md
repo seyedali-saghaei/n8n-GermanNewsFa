@@ -171,8 +171,8 @@ See [Hybrid News-to-Video Pipeline](docs/local-video-pipeline.md) for architectu
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/seyedali_saghaei/GermanNewsFa.git
-   cd GermanNewsFa
+   git clone https://github.com/seyedali-saghaei/n8n-GermanNewsFa.git
+   cd n8n-GermanNewsFa
    ```
 
 2. Import the workflow into n8n:

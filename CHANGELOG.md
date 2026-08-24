@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-24
+
+### Added
+
+- Stable Cloudflare Tunnel route for the hosted-to-local video webhook.
+- Automatic Windows startup for the tunnel, Ollama, ComfyUI, and local n8n.
+- Standalone FFmpeg concat helper.
+
+### Changed
+
+- Updated both n8n workflow exports after the successful production test.
+- Restricted the public tunnel route to `/webhook/german-news-video`.
+- Updated the local pipeline documentation with the current startup and security setup.
+
 ## 2026-08-13
 
 ### Added
